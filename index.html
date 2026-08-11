@@ -46,7 +46,13 @@
         .swal-loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* ป้องกัน PDF ตัดขาดครึ่ง */
+        /* คำสั่งบังคับให้แต่ละหัวข้อขึ้นหน้าใหม่ใน PDF ทันที */
+        .page-break {
+            page-break-before: always !important;
+            break-before: page !important;
+            padding-top: 10px;
+        }
+        
         .avoid-page-break {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
@@ -68,9 +74,9 @@
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     รีเฟรชข้อมูล
                 </button>
-      <a href="form.html" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md font-semibold transition shadow flex items-center">
-    + เพิ่มรายการใหม่
-</a>
+                <a href="index.html" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md font-semibold transition shadow flex items-center">
+                    + เพิ่มรายการใหม่
+                </a>
             </div>
         </div>
 
@@ -106,7 +112,6 @@
                 </button>
             </div>
             
-            <!-- เปลี่ยน padding เป็น p-0 หรือ px-6 py-4 ให้สวยงาม และใส่สีขาวเป็น Background หลักให้ PDF อ่านง่าย -->
             <div class="p-6 bg-white" id="modal-content">
                 <!-- Content injected via JS -->
             </div>
@@ -123,13 +128,10 @@
 
     <!-- Javascript -->
     <script>
-        // API URL (สำคัญ: ใส่ URL Apps Script ของคุณให้ถูกต้อง)
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGKkCzyqUbBun5bW_v38W1_8thC49CbitoPvIITLb4YcNBN37QcW06499woUGH3Q/exec";
-        
         let allData = [];
         let dataTable;
 
-        // ฟังก์ชันสร้าง Badge สี และดักจับค่า 'normal', 'abnormal' อย่างถูกต้อง
         function getStatusBadge(status) {
             if(!status) return '<span class="text-gray-400">-</span>';
             const s = String(status).toLowerCase().trim();
@@ -140,7 +142,6 @@
             }
         }
 
-        // ฟังก์ชันแปลงลิงก์ Google Drive ให้อ่านรูปได้โดยตรง ป้องกันรูปไม่ขึ้น
         function getDirectDriveLink(url) {
             if (!url) return '';
             const match = url.match(/\/d\/(.*?)\//);
@@ -151,7 +152,6 @@
         }
 
         async function fetchData() {
-            // โชว์ SweetAlert โหลดข้อมูล
             Swal.fire({
                 title: 'กำลังดึงข้อมูล...',
                 html: 'รอสักครู่ ระบบกำลังเชื่อมต่อฐานข้อมูล<br><br><div class="swal-loader"></div>',
@@ -174,14 +174,11 @@
                 if (json.result === 'success') {
                     allData = json.data;
                     renderTable(allData);
-                    
-                    Swal.close(); // ปิดโหลด
-                    
+                    Swal.close();
                     const Toast = Swal.mixin({
                         toast: true, position: 'top-end', showConfirmButton: false, timer: 1500
                     });
                     Toast.fire({ icon: 'success', title: 'โหลดข้อมูลสำเร็จ!' });
-
                 } else {
                     Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ' + json.message, 'error');
                 }
@@ -200,7 +197,6 @@
                 const cm = row["CM_Number"] || '-';
                 const checker = row["ชื่อผู้ตรวจเช็ค"] || '-';
                 
-                // สำหรับแสดงในตาราง ใช้แบบกลมๆ เล็กๆ ได้
                 const getMiniBadge = (status) => {
                     const s = String(status||'').toLowerCase().trim();
                     if(s === 'normal' || (s.includes('ปกติ') && !s.includes('ไม่'))) return `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">ปกติ</span>`;
@@ -245,7 +241,7 @@
         }
 
         // ==========================================
-        // Modal & Details Logic - เพิ่มคลาส avoid-page-break ในแต่ละบล็อก
+        // Modal & Details Logic (ใส่ class .page-break แยกแต่ละหัวข้อให้เต็มหน้า PDF)
         // ==========================================
         function viewDetails(index) {
             const row = allData[index];
@@ -254,8 +250,8 @@
             document.getElementById('modal-title').innerText = `รายงานผลการตรวจเช็ค`;
             
             const html = `
-                <!-- ================== ข้อมูลพื้นฐาน ================== -->
-                <div class="avoid-page-break mb-8">
+                <!-- ================== ส่วนที่ 1 (หน้า 1) ================== -->
+                <div class="mb-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 1: ข้อมูลทั่วไป และ ระยะช่องใบ</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
@@ -305,8 +301,8 @@
                     </div>
                 </div>
 
-                <!-- ================== Guide Vane ================== -->
-                <div class="avoid-page-break mb-8">
+                <!-- ================== ส่วนที่ 2 (ขึ้นหน้าใหม่) ================== -->
+                <div class="page-break mb-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 2: สถานะช่องใบ (Guide Vane)</h2>
                     <div class="mb-4">
                         <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="w-full h-auto rounded-lg border max-h-[300px] object-contain bg-gray-50" crossorigin="anonymous">
@@ -345,110 +341,114 @@
                     </div>
                 </div>
 
-                <!-- ================== Cyclone & Chute ================== -->
-                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
-                
-                <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                    <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                    <div class="w-full md:w-2/3 flex flex-col justify-center">
-                        <h3 class="font-bold text-gray-800 mb-2">3. สภาพท่อเข้า Cyclone</h3>
-                        <div class="mb-3">${getStatusBadge(row["ท่อเข้า_Cyclone"])}</div>
-                        <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ท่อเข้า_Cyclone_Remark"] || '-'}</div>
-                    </div>
-                </div>
-
-                <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                    <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                    <div class="w-full md:w-2/3 flex flex-col justify-center">
-                        <h3 class="font-bold text-gray-800 mb-2">4. สภาพแผ่นกระจายลม</h3>
-                        <div class="mb-3">${getStatusBadge(row["แผ่นกระจายลม"])}</div>
-                        <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["แผ่นกระจายลม_Remark"] || '-'}</div>
-                    </div>
-                </div>
-
-                <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                    <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                    <div class="w-full md:w-2/3 flex flex-col justify-center">
-                        <h3 class="font-bold text-gray-800 mb-2">5. การกองวัตถุดิบรอบ Guide vane/ผนัง</h3>
-                        <div class="mb-3">${getStatusBadge(row["กองวัตถุดิบ"])}</div>
-                        <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["กองวัตถุดิบ_Remark"] || '-'}</div>
-                    </div>
-                </div>
-
-                <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                    <div class="w-full md:w-1/3 text-center flex flex-col justify-center">
-                        <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="w-full h-32 object-cover rounded border mb-2 cursor-pointer" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <span class="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow">Std Gap: 15 cm</span>
-                    </div>
-                    <div class="w-full md:w-2/3 flex flex-col justify-center">
-                        <h3 class="font-bold text-gray-800 mb-3">6. ระยะ Chute ลง Rotor (cm)</h3>
-                        <div class="grid grid-cols-3 gap-2 mb-3">
-                            <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">ใต้/ออก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_ใต้/ออก"]||'-'}</span></div>
-                            <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">ใต้/ตก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_ใต้/ตก"]||'-'}</span></div>
-                            <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">เหนือ/ออก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_เหนือ/ออก"]||'-'}</span></div>
-                        </div>
-                        <div class="text-sm text-gray-600 bg-white p-2 border rounded"><strong>Remark:</strong> ${row["ChuteลงRotor_Remark"] || '-'}</div>
-                    </div>
-                </div>
-
-                <div class="avoid-page-break bg-white border rounded-lg p-4 mb-8 flex flex-col md:flex-row gap-4 shadow-sm">
-                    <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                    <div class="w-full md:w-2/3 flex flex-col justify-center">
-                        <h3 class="font-bold text-gray-800 mb-2">7. Chute รับจากปูนเข้า Sep</h3>
-                        <div class="mb-3">${getStatusBadge(row["Chuteเข้าSep"])}</div>
-                        <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["Chuteเข้าSep_Remark"] || '-'}</div>
-                    </div>
-                </div>
-
-                <!-- ================== Final Check ================== -->
-                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย & รูปภาพแนบ</h2>
-                
-                <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
-                    <h3 class="font-bold text-gray-800 mb-3">8. ระยะ Gap Air Seal (Std: 5 mm)</h3>
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 grid grid-cols-4 gap-2">
-                            ${[1,2,3,4,5,6,7,8].map(i => `
-                                <div class="bg-white border p-2 rounded text-center shadow-sm flex flex-col justify-center">
-                                    <span class="text-xs text-gray-500 block mb-1">จุด ${i}</span>
-                                    <span class="font-bold text-blue-700">${row["AirSeal_จุด"+i]||'-'}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="avoid-page-break bg-white border rounded-lg p-4 mb-6 flex flex-col md:flex-row gap-4 shadow-sm">
-                    <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                    <div class="w-full md:w-2/3 flex flex-col justify-center">
-                        <h3 class="font-bold text-gray-800 mb-2">9. สภาพผนังกันข้าง Rotor</h3>
-                        <div class="mb-3">${getStatusBadge(row["ผนังกันRotor"])}</div>
-                        <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ผนังกันRotor_Remark"] || '-'}</div>
-                    </div>
-                </div>
-
-                <div class="avoid-page-break bg-gray-50 border rounded-lg p-4 mb-6 shadow-sm">
-                    <h3 class="font-bold text-gray-800 mb-3">10. หมายเหตุเพิ่มเติม / รูปภาพ</h3>
-                    <p class="text-sm text-gray-800 bg-white p-4 rounded border border-gray-200 min-h-[60px] mb-4 whitespace-pre-wrap shadow-inner">${row["Remark_อื่นๆ"] || 'ไม่มีหมายเหตุเพิ่มเติม'}</p>
+                <!-- ================== ส่วนที่ 3 (ขึ้นหน้าใหม่) ================== -->
+                <div class="page-break mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
                     
-                    <div class="flex flex-col sm:flex-row gap-4 mt-2">
-                        ${row["รูปแนบ_1"] ? `
-                            <div class="flex-1 bg-white p-2 border rounded shadow-sm">
-                                <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
-                                <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
-                                     onclick="viewImageFull(this.src)" 
-                                     class="w-full h-48 object-cover rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
+                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
+                        <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">3. สภาพท่อเข้า Cyclone</h3>
+                            <div class="mb-3">${getStatusBadge(row["ท่อเข้า_Cyclone"])}</div>
+                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ท่อเข้า_Cyclone_Remark"] || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
+                        <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">4. สภาพแผ่นกระจายลม</h3>
+                            <div class="mb-3">${getStatusBadge(row["แผ่นกระจายลม"])}</div>
+                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["แผ่นกระจายลม_Remark"] || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
+                        <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">5. การกองวัตถุดิบรอบ Guide vane/ผนัง</h3>
+                            <div class="mb-3">${getStatusBadge(row["กองวัตถุดิบ"])}</div>
+                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["กองวัตถุดิบ_Remark"] || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
+                        <div class="w-full md:w-1/3 text-center flex flex-col justify-center">
+                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="w-full h-32 object-cover rounded border mb-2 cursor-pointer" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                            <span class="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow">Std Gap: 15 cm</span>
+                        </div>
+                        <div class="w-full md:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-3">6. ระยะ Chute ลง Rotor (cm)</h3>
+                            <div class="grid grid-cols-3 gap-2 mb-3">
+                                <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">ใต้/ออก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_ใต้/ออก"]||'-'}</span></div>
+                                <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">ใต้/ตก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_ใต้/ตก"]||'-'}</span></div>
+                                <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">เหนือ/ออก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_เหนือ/ออก"]||'-'}</span></div>
                             </div>
-                        ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
+                            <div class="text-sm text-gray-600 bg-white p-2 border rounded"><strong>Remark:</strong> ${row["ChuteลงRotor_Remark"] || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
+                        <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">7. Chute รับจากปูนเข้า Sep</h3>
+                            <div class="mb-3">${getStatusBadge(row["Chuteเข้าSep"])}</div>
+                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["Chuteเข้าSep_Remark"] || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================== ส่วนที่ 4 (ขึ้นหน้าใหม่) ================== -->
+                <div class="page-break mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย & รูปภาพแนบ</h2>
+                    
+                    <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
+                        <h3 class="font-bold text-gray-800 mb-3">8. ระยะ Gap Air Seal (Std: 5 mm)</h3>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                            <div class="w-full md:w-2/3 grid grid-cols-4 gap-2">
+                                ${[1,2,3,4,5,6,7,8].map(i => `
+                                    <div class="bg-white border p-2 rounded text-center shadow-sm flex flex-col justify-center">
+                                        <span class="text-xs text-gray-500 block mb-1">จุด ${i}</span>
+                                        <span class="font-bold text-blue-700">${row["AirSeal_จุด"+i]||'-'}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-6 flex flex-col md:flex-row gap-4 shadow-sm">
+                        <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">9. สภาพผนังกันข้าง Rotor</h3>
+                            <div class="mb-3">${getStatusBadge(row["ผนังกันRotor"])}</div>
+                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ผนังกันRotor_Remark"] || '-'}</div>
+                        </div>
+                    </div>
+
+                    <div class="avoid-page-break bg-gray-50 border rounded-lg p-4 mb-6 shadow-sm">
+                        <h3 class="font-bold text-gray-800 mb-3">10. หมายเหตุเพิ่มเติม / รูปภาพ</h3>
+                        <p class="text-sm text-gray-800 bg-white p-4 rounded border border-gray-200 min-h-[60px] mb-4 whitespace-pre-wrap shadow-inner">${row["Remark_อื่นๆ"] || 'ไม่มีหมายเหตุเพิ่มเติม'}</p>
                         
-                        ${row["รูปแนบ_2"] ? `
-                            <div class="flex-1 bg-white p-2 border rounded shadow-sm">
-                                <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
-                                <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
-                                     onclick="viewImageFull(this.src)" 
-                                     class="w-full h-48 object-cover rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
-                            </div>
-                        ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
+                        <div class="flex flex-col sm:flex-row gap-4 mt-2">
+                            ${row["รูปแนบ_1"] ? `
+                                <div class="flex-1 bg-white p-2 border rounded shadow-sm">
+                                    <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
+                                    <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
+                                         onclick="viewImageFull(this.src)" 
+                                         class="w-full h-48 object-cover rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
+                                </div>
+                            ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
+                            
+                            ${row["รูปแนบ_2"] ? `
+                                <div class="flex-1 bg-white p-2 border rounded shadow-sm">
+                                    <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
+                                    <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
+                                         onclick="viewImageFull(this.src)" 
+                                         class="w-full h-48 object-cover rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
+                                </div>
+                            ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
+                        </div>
                     </div>
                 </div>
                 <!-- End of Report -->
@@ -459,7 +459,6 @@
             document.body.classList.add('modal-active');
         }
 
-        // ฟังก์ชัน SweetAlert ขยายรูปเวลาคลิกใน Modal
         function viewImageFull(src) {
             Swal.fire({
                 imageUrl: src,
@@ -485,13 +484,9 @@
             if(e.target === this) closeModal();
         });
         
-        // ==========================================
-        // ฟังก์ชันโหลด PDF (แก้ปัญหาภาพโดนตัดขาดครึ่ง)
-        // ==========================================
         function downloadPDF() {
             const element = document.getElementById('modal-content');
             
-            // ดึงชื่อ CM มาตั้งเป็นชื่อไฟล์ PDF
             const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
             const cmName = cmElement ? cmElement.innerText : 'Unknown';
             const fileName = `Report_Separator_${cmName}.pdf`;
@@ -500,13 +495,11 @@
                 margin:       [0.3, 0.3, 0.3, 0.3],
                 filename:     fileName,
                 image:        { type: 'jpeg', quality: 0.98 },
-                // เพิ่มโหมด 'css' เข้าไปใน pagebreak เพื่อให้ระบบบังคับไม่ให้กล่องข้อมูลโดนตัดขาดครึ่งหน้า
                 pagebreak:    { mode: ['css', 'legacy'] },
                 html2canvas:  { scale: 2, useCORS: true }, 
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
             
-            // ใช้ SweetAlert ระหว่างสร้าง PDF
             Swal.fire({
                 title: 'กำลังเตรียมไฟล์ PDF',
                 text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสาร...',
