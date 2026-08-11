@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Separator & Guide Vane Inspection</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8 relative min-h-screen">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden mb-10">
+        <div class="p-6 md:p-8">
+            
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-6">ฟอร์มบันทึกการตรวจเช็ค Separator</h1>
+            
+            <!-- Progress Bar -->
+            <div class="flex items-center justify-between mb-8 relative">
+                <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-gray-200 z-0"></div>
+                
+                <div class="relative z-10 flex flex-col items-center">
+                    <div id="indicator-1" class="w-10 h-10 rounded-full flex items-center justify-center bg-blue-600 text-white font-bold ring-4 ring-blue-100 shadow-md transition-all">1</div>
+                    <span class="text-xs font-semibold mt-2 text-gray-700 hidden sm:block">ข้อมูลพื้นฐาน</span>
+                </div>
+                <div class="relative z-10 flex flex-col items-center">
+                    <div id="indicator-2" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-500 font-bold shadow-md transition-all">2</div>
+                    <span class="text-xs font-semibold mt-2 text-gray-500 hidden sm:block">Guide Vane</span>
+                </div>
+                <div class="relative z-10 flex flex-col items-center">
+                    <div id="indicator-3" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-500 font-bold shadow-md transition-all">3</div>
+                    <span class="text-xs font-semibold mt-2 text-gray-500 hidden sm:block">Cyclone & Chute</span>
+                </div>
+                <div class="relative z-10 flex flex-col items-center">
+                    <div id="indicator-4" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-500 font-bold shadow-md transition-all">4</div>
+                    <span class="text-xs font-semibold mt-2 text-gray-500 hidden sm:block">ตรวจสอบขั้นสุดท้าย</span>
+                </div>
+            </div>
+
+            <form id="mainForm" onsubmit="submitForm(event)" class="space-y-6">
+                
+                <!-- ================== STEP 1 ================== -->
+                <div id="step-1" class="step-container block">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 1: ข้อมูลทั่วไป และ ระยะช่องใบ</h2>
+                    
+                    <!-- General Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">วันที่ตรวจเช็ค</label>
+                            <input type="date" name="check_date" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ตรวจเช็ค</label>
+                            <input type="text" name="checker_name" placeholder="ระบุชื่อพนักงาน..." required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">CM (Cement Mill)</label>
+                            <input type="text" name="cm_number" placeholder="ระบุหมายเลข CM..." required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 outline-none uppercase">
+                        </div>
+                    </div>
+
+                    <!-- Image 1 -->
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-500 mb-2 font-semibold">ภาพประกอบ / Reference (Separator)</p>
+                        <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="w-full h-auto rounded-lg border object-contain max-h-[400px] bg-gray-50">
+                    </div>
+
+                    <!-- Blade Gaps -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-800 mb-1">1. ระยะช่องใบที่ 1,2 (Std: 55 mm)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" step="0.1" name="gap_blade_1" placeholder="วัดจริง" required class="w-full px-3 py-2 border border-gray-300 rounded-md"> <span class="text-sm">mm</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-800 mb-1">2. ระยะช่องใบที่ 3,4 (Std: 66 mm)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" step="0.1" name="gap_blade_2" placeholder="วัดจริง" required class="w-full px-3 py-2 border border-gray-300 rounded-md"> <span class="text-sm">mm</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-800 mb-1">3. ระยะช่องใบที่ 5,6 (Std: 77 mm)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" step="0.1" name="gap_blade_3" placeholder="วัดจริง" required class="w-full px-3 py-2 border border-gray-300 rounded-md"> <span class="text-sm">mm</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-800 mb-1">4. ระยะช่องใบที่ 7,8 (Std: 88 mm)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" step="0.1" name="gap_blade_4" placeholder="วัดจริง" required class="w-full px-3 py-2 border border-gray-300 rounded-md"> <span class="text-sm">mm</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-800 mb-1">5. ระยะช่องใบที่ 9,10 (Std: 99 mm)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" step="0.1" name="gap_blade_5" placeholder="วัดจริง" required class="w-full px-3 py-2 border border-gray-300 rounded-md"> <span class="text-sm">mm</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-medium text-gray-800 mb-1">6. ระยะช่องใบที่ 11,12 (Std: 110 mm)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" step="0.1" name="gap_blade_6" placeholder="วัดจริง" required class="w-full px-3 py-2 border border-gray-300 rounded-md"> <span class="text-sm">mm</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-6 flex justify-end">
+                        <button type="button" onclick="nextStep()" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition">ถัดไป</button>
+                    </div>
+                </div>
+
+                <!-- ================== STEP 2 ================== -->
+                <div id="step-2" class="step-container hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 2: สถานะช่องใบ (Guide Vane)</h2>
+                    
+                    <div class="mb-4">
+                        <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="w-full h-auto rounded-lg border max-h-[300px] object-contain bg-gray-50">
+                    </div>
+
+                    <div class="bg-white border rounded-lg divide-y divide-gray-100">
+                        <div class="p-4 flex flex-col md:flex-row md:items-center hover:bg-gray-50">
+                            <div class="w-full md:w-1/4 mb-2"><span class="font-medium text-gray-800">ช่องใบที่ 1,2</span></div>
+                            <div class="w-full md:w-2/4 flex space-x-6 mb-2">
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_1_2" value="normal" class="w-5 h-5 text-green-600" required> <span class="ml-2 font-medium">ปกติ</span></label>
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_1_2" value="abnormal" class="w-5 h-5 text-red-600"> <span class="ml-2 font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <div class="w-full md:w-1/4"><input type="text" name="remark_1_2" placeholder="Remark" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"></div>
+                        </div>
+                        <div class="p-4 flex flex-col md:flex-row md:items-center hover:bg-gray-50">
+                            <div class="w-full md:w-1/4 mb-2"><span class="font-medium text-gray-800">ช่องใบที่ 3,4</span></div>
+                            <div class="w-full md:w-2/4 flex space-x-6 mb-2">
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_3_4" value="normal" class="w-5 h-5 text-green-600" required> <span class="ml-2 font-medium">ปกติ</span></label>
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_3_4" value="abnormal" class="w-5 h-5 text-red-600"> <span class="ml-2 font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <div class="w-full md:w-1/4"><input type="text" name="remark_3_4" placeholder="Remark" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"></div>
+                        </div>
+                        <div class="p-4 flex flex-col md:flex-row md:items-center hover:bg-gray-50">
+                            <div class="w-full md:w-1/4 mb-2"><span class="font-medium text-gray-800">ช่องใบที่ 5,6</span></div>
+                            <div class="w-full md:w-2/4 flex space-x-6 mb-2">
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_5_6" value="normal" class="w-5 h-5 text-green-600" required> <span class="ml-2 font-medium">ปกติ</span></label>
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_5_6" value="abnormal" class="w-5 h-5 text-red-600"> <span class="ml-2 font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <div class="w-full md:w-1/4"><input type="text" name="remark_5_6" placeholder="Remark" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"></div>
+                        </div>
+                        <div class="p-4 flex flex-col md:flex-row md:items-center hover:bg-gray-50">
+                            <div class="w-full md:w-1/4 mb-2"><span class="font-medium text-gray-800">ช่องใบที่ 7,8</span></div>
+                            <div class="w-full md:w-2/4 flex space-x-6 mb-2">
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_7_8" value="normal" class="w-5 h-5 text-green-600" required> <span class="ml-2 font-medium">ปกติ</span></label>
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_7_8" value="abnormal" class="w-5 h-5 text-red-600"> <span class="ml-2 font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <div class="w-full md:w-1/4"><input type="text" name="remark_7_8" placeholder="Remark" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"></div>
+                        </div>
+                        <div class="p-4 flex flex-col md:flex-row md:items-center hover:bg-gray-50">
+                            <div class="w-full md:w-1/4 mb-2"><span class="font-medium text-gray-800">ช่องใบที่ 9,10</span></div>
+                            <div class="w-full md:w-2/4 flex space-x-6 mb-2">
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_9_10" value="normal" class="w-5 h-5 text-green-600" required> <span class="ml-2 font-medium">ปกติ</span></label>
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_9_10" value="abnormal" class="w-5 h-5 text-red-600"> <span class="ml-2 font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <div class="w-full md:w-1/4"><input type="text" name="remark_9_10" placeholder="Remark" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"></div>
+                        </div>
+                        <div class="p-4 flex flex-col md:flex-row md:items-center hover:bg-gray-50">
+                            <div class="w-full md:w-1/4 mb-2"><span class="font-medium text-gray-800">ช่องใบที่ 11,12</span></div>
+                            <div class="w-full md:w-2/4 flex space-x-6 mb-2">
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_11_12" value="normal" class="w-5 h-5 text-green-600" required> <span class="ml-2 font-medium">ปกติ</span></label>
+                                <label class="flex items-center cursor-pointer"><input type="radio" name="vane_11_12" value="abnormal" class="w-5 h-5 text-red-600"> <span class="ml-2 font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <div class="w-full md:w-1/4"><input type="text" name="remark_11_12" placeholder="Remark" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"></div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 flex justify-between">
+                        <button type="button" onclick="prevStep()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">กลับ</button>
+                        <button type="button" onclick="nextStep()" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition">ถัดไป</button>
+                    </div>
+                </div>
+
+                <!-- ================== STEP 3 ================== -->
+                <div id="step-3" class="step-container hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
+                    
+                    <!-- 3 -->
+                    <div class="bg-white border hover:shadow-md transition rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4">
+                        <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer" onclick="viewImage(this.src)">
+                        <div class="w-full md:w-2/3">
+                            <h3 class="font-semibold mb-2">3. สภาพท่อเข้า Cyclone</h3>
+                            <div class="flex space-x-6 mb-2">
+                                <label class="cursor-pointer"><input type="radio" name="status_cyclone" value="normal" class="w-4 h-4 text-green-600" required> <span class="font-medium">ปกติ</span></label>
+                                <label class="cursor-pointer"><input type="radio" name="status_cyclone" value="abnormal" class="w-4 h-4 text-red-600"> <span class="font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <input type="text" name="remark_cyclone" placeholder="Remark" class="w-full px-3 py-1 border rounded text-sm">
+                        </div>
+                    </div>
+
+                    <!-- 4 -->
+                    <div class="bg-white border hover:shadow-md transition rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4">
+                        <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer" onclick="viewImage(this.src)">
+                        <div class="w-full md:w-2/3">
+                            <h3 class="font-semibold mb-2">4. สภาพแผ่นกระจายลม</h3>
+                            <div class="flex space-x-6 mb-2">
+                                <label class="cursor-pointer"><input type="radio" name="status_air_dist" value="normal" class="w-4 h-4 text-green-600" required> <span class="font-medium">ปกติ</span></label>
+                                <label class="cursor-pointer"><input type="radio" name="status_air_dist" value="abnormal" class="w-4 h-4 text-red-600"> <span class="font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <input type="text" name="remark_air_dist" placeholder="Remark" class="w-full px-3 py-1 border rounded text-sm">
+                        </div>
+                    </div>
+
+                    <!-- 5 -->
+                    <div class="bg-white border hover:shadow-md transition rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4">
+                        <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer" onclick="viewImage(this.src)">
+                        <div class="w-full md:w-2/3">
+                            <h3 class="font-semibold mb-2">5. การกองวัตถุดิบรอบ Guide vane/ผนัง</h3>
+                            <div class="flex space-x-6 mb-2">
+                                <label class="cursor-pointer"><input type="radio" name="status_material_pile" value="normal" class="w-4 h-4 text-green-600" required> <span class="font-medium">ปกติ (ไม่กอง)</span></label>
+                                <label class="cursor-pointer"><input type="radio" name="status_material_pile" value="abnormal" class="w-4 h-4 text-red-600"> <span class="font-medium">ไม่ปกติ (กองเยอะ)</span></label>
+                            </div>
+                            <input type="text" name="remark_material_pile" placeholder="Remark" class="w-full px-3 py-1 border rounded text-sm">
+                        </div>
+                    </div>
+
+                    <!-- 6 -->
+                    <div class="bg-blue-50 border border-blue-200 hover:shadow-md transition rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4">
+                        <div class="w-full md:w-1/3 text-center">
+                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="w-full h-32 object-cover rounded mb-2 cursor-pointer" onclick="viewImage(this.src)">
+                            <span class="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">Std Gap: 15 cm</span>
+                        </div>
+                        <div class="w-full md:w-2/3">
+                            <h3 class="font-semibold mb-2">6. ระยะ Chute ลง Rotor (cm)</h3>
+                            <div class="grid grid-cols-3 gap-2 mb-3">
+                                <div><label class="text-xs text-gray-600">ใต้/ออก</label><input type="number" step="0.1" name="gap_se" required class="w-full px-2 py-1 border rounded text-sm"></div>
+                                <div><label class="text-xs text-gray-600">ใต้/ตก</label><input type="number" step="0.1" name="gap_sw" required class="w-full px-2 py-1 border rounded text-sm"></div>
+                                <div><label class="text-xs text-gray-600">เหนือ/ออก</label><input type="number" step="0.1" name="gap_ne" required class="w-full px-2 py-1 border rounded text-sm"></div>
+                            </div>
+                            <input type="text" name="remark_chute_rotor" placeholder="Remark" class="w-full px-3 py-1 border rounded text-sm">
+                        </div>
+                    </div>
+
+                    <!-- 7 -->
+                    <div class="bg-white border hover:shadow-md transition rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4">
+                        <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer" onclick="viewImage(this.src)">
+                        <div class="w-full md:w-2/3">
+                            <h3 class="font-semibold mb-2">7. Chute รับจากปูนเข้า Sep</h3>
+                            <div class="flex space-x-6 mb-2">
+                                <label class="cursor-pointer"><input type="radio" name="status_chute_in" value="normal" class="w-4 h-4 text-green-600" required> <span class="font-medium">ปกติ</span></label>
+                                <label class="cursor-pointer"><input type="radio" name="status_chute_in" value="abnormal" class="w-4 h-4 text-red-600"> <span class="font-medium">ไม่ปกติ</span></label>
+                            </div>
+                            <input type="text" name="remark_chute_in" placeholder="Remark" class="w-full px-3 py-1 border rounded text-sm">
+                        </div>
+                    </div>
+
+                    <div class="pt-6 flex justify-between">
+                        <button type="button" onclick="prevStep()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">กลับ</button>
+                        <button type="button" onclick="nextStep()" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition">ถัดไป</button>
+                    </div>
+                </div>
+
+                <!-- ================== STEP 4 ================== -->
+                <div id="step-4" class="step-container hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย & แนบรูปภาพ</h2>
+                    
+                    <!-- 8 -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold mb-2">8. ระยะ Gap Air Seal (Std: 5 mm)</h3>
+                        <div class="flex flex-col md:flex-row gap-4 mb-4">
+                            <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer" onclick="viewImage(this.src)">
+                            <div class="w-full md:w-2/3 grid grid-cols-4 gap-2">
+                                <div><label class="text-xs">จุด 1</label><input type="number" step="0.1" name="gap_air_seal_1" required class="w-full px-2 py-1 border rounded text-sm text-center"></div>
+                                <div><label class="text-xs">จุด 2</label><input type="number" step="0.1" name="gap_air_seal_2" required class="w-full px-2 py-1 border rounded text-sm text-center"></div>
+                                <div><label class="text-xs">จุด 3</label><input type="number" step="0.1" name="gap_air_seal_3" required class="w-full px-2 py-1 border rounded text-sm text-center"></div>
+                                <div><label class="text-xs">จุด 4</label><input type="number" step="0.1" name="gap_air_seal_4" required class="w-full px-2 py-1 border rounded text-sm text-center"></div>
+                                <div><label class="text-xs">จุด 5</label><input type="number" step="0.1" name="gap_air_seal_5" required class="w-full px-2 py-1 border rounded text-sm text-center"></div>
+                                <div><label class="text-xs">จุด 6</label><input type="number" step="0.1" name="gap_air_seal_6" required class="w-full px-2 py-1 border rounded text-sm text-center"></div>
+                                <div><label class="text-xs">จุด 7</label><input type="number" step="0.1" name="gap_air_seal_7" required class="w-full px-2 py-1 border rounded text-sm text-center"></div>
+                                <div><label class="text-xs">จุด 8</label><input type="number" step="0.1" name="gap_air_seal_8" required class="w-full px-2 py-1 border rounded text-sm text-center"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 9 -->
+                    <div class="bg-white border rounded-lg p-4 mb-6 flex flex-col md:flex-row gap-4">
+                        <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer" onclick="viewImage(this.src)">
+                        <div class="w-full md:w-2/3">
+                            <h3 class="font-semibold mb-2">9. สภาพผนังกันข้าง Rotor <span class="text-xs text-red-500 bg-red-100 px-2 py-0.5 rounded-full ml-1">ต้องไม่รั่ว!</span></h3>
+                            <div class="flex space-x-6 mb-2">
+                                <label class="cursor-pointer"><input type="radio" name="status_rotor_wall" value="normal" class="w-4 h-4 text-green-600" required> <span class="font-medium">ปกติ (ไม่รั่ว)</span></label>
+                                <label class="cursor-pointer"><input type="radio" name="status_rotor_wall" value="abnormal" class="w-4 h-4 text-red-600"> <span class="font-medium">ไม่ปกติ (รั่วทะลุ)</span></label>
+                            </div>
+                            <input type="text" name="remark_rotor_wall" placeholder="Remark" class="w-full px-3 py-1 border rounded text-sm">
+                        </div>
+                    </div>
+
+                    <!-- 10 -->
+                    <div class="bg-gray-50 border rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold mb-2">10. หมายเหตุเพิ่มเติม / อัปโหลดรูปภาพ</h3>
+                        <textarea name="remark_others" rows="3" class="w-full px-3 py-2 border rounded-md mb-4" placeholder="พบปัญหาอื่นๆ..."></textarea>
+                        
+                        <!-- Image Upload with Preview -->
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <!-- File 1 -->
+                            <label for="file1" class="relative flex-1 flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer bg-white hover:bg-gray-100 overflow-hidden transition-all shadow-sm">
+                                <img id="preview1" class="hidden absolute inset-0 w-full h-full object-cover z-0">
+                                <div id="label-file1" class="relative z-10 flex flex-col items-center justify-center bg-white bg-opacity-80 w-full py-2">
+                                    <svg class="w-6 h-6 text-gray-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    <span class="text-sm font-semibold text-gray-600">แนบรูปที่ 1</span>
+                                </div>
+                                <input id="file1" type="file" accept="image/*" onchange="previewImage(this, 'preview1', 'label-file1')">
+                            </label>
+                            
+                            <!-- File 2 -->
+                            <label for="file2" class="relative flex-1 flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer bg-white hover:bg-gray-100 overflow-hidden transition-all shadow-sm">
+                                <img id="preview2" class="hidden absolute inset-0 w-full h-full object-cover z-0">
+                                <div id="label-file2" class="relative z-10 flex flex-col items-center justify-center bg-white bg-opacity-80 w-full py-2">
+                                    <svg class="w-6 h-6 text-gray-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    <span class="text-sm font-semibold text-gray-600">แนบรูปที่ 2</span>
+                                </div>
+                                <input id="file2" type="file" accept="image/*" onchange="previewImage(this, 'preview2', 'label-file2')">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 flex justify-between">
+                        <button type="button" onclick="prevStep()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">กลับ</button>
+                        <button type="submit" class="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-105 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            ยืนยันและส่งข้อมูล
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // API URL (สำคัญ: ใส่ URL Apps Script ของคุณ)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGKkCzyqUbBun5bW_v38W1_8thC49CbitoPvIITLb4YcNBN37QcW06499woUGH3Q/exec";
+
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        // SweetAlert ใช้งานสำหรับรูปภาพขยายดูได้เลย
+        function viewImage(src) {
+            Swal.fire({
+                imageUrl: src,
+                imageAlt: 'Reference Image',
+                width: '80%',
+                padding: '1em',
+                showConfirmButton: false,
+                showCloseButton: true,
+                backdrop: `rgba(0,0,0,0.8)`
+            });
+        }
+
+        // โชว์/เปลี่ยนหน้า Step
+        function showStep(step) {
+            document.querySelectorAll('.step-container').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('block'));
+            
+            document.getElementById('step-' + step).classList.remove('hidden');
+            document.getElementById('step-' + step).classList.add('block');
+            
+            for(let i=1; i<=totalSteps; i++) {
+                const ind = document.getElementById('indicator-' + i);
+                if(i < step) {
+                    ind.className = "w-10 h-10 rounded-full flex items-center justify-center bg-green-500 text-white font-bold shadow-md ring-0 transition-all";
+                    ind.innerHTML = '✓';
+                } else if(i === step) {
+                    ind.className = "w-10 h-10 rounded-full flex items-center justify-center bg-blue-600 text-white font-bold ring-4 ring-blue-200 shadow-md transition-all";
+                    ind.innerHTML = i;
+                } else {
+                    ind.className = "w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-500 font-bold shadow-md ring-0 transition-all";
+                    ind.innerHTML = i;
+                }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function nextStep() {
+            const container = document.getElementById('step-' + currentStep);
+            const inputs = container.querySelectorAll('input, textarea, select');
+            for(let input of inputs) {
+                if(!input.checkValidity()) {
+                    input.reportValidity();
+                    return;
+                }
+            }
+            if(currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+
+        function prevStep() {
+            if(currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        // พรีวิวรูปภาพก่อนอัปโหลด (Show Image Preview)
+        function previewImage(input, imgId, labelId) {
+            const file = input.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(imgId);
+                    img.src = e.target.result;
+                    img.classList.remove('hidden'); // แสดงรูปภาพ
+                    
+                    const label = document.getElementById(labelId);
+                    label.innerHTML = `<span class="text-blue-700 font-bold text-xs bg-white bg-opacity-90 px-2 py-1 rounded shadow">✓ เปลี่ยนรูปภาพ</span>`;
+                    
+                    // แจ้งเตือน SweetAlert ให้รู้ว่าแนบรูปสำเร็จ
+                    const Toast = Swal.mixin({
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true
+                    });
+                    Toast.fire({ icon: 'success', title: 'เลือกรูปภาพแล้ว' });
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function submitForm(e) {
+            e.preventDefault();
+            
+            // ใช้ SweetAlert สำหรับหน้า Loading
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล...',
+                html: 'กรุณารอสักครู่ ระบบกำลังอัปโหลดรูปภาพและส่งข้อมูล<br><br><div class="loader mx-auto"></div>',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+            });
+            
+            const form = document.getElementById('mainForm');
+            const formData = new FormData(form);
+            const dataObj = new URLSearchParams();
+            
+            for (const [key, value] of formData.entries()) {
+                dataObj.append(key, value);
+            }
+
+            try {
+                const file1 = document.getElementById('file1').files[0];
+                if (file1) {
+                    const base64_1 = await getBase64(file1);
+                    dataObj.append('file1_data', base64_1);
+                    dataObj.append('file1_name', file1.name);
+                    dataObj.append('file1_mimeType', file1.type);
+                }
+
+                const file2 = document.getElementById('file2').files[0];
+                if (file2) {
+                    const base64_2 = await getBase64(file2);
+                    dataObj.append('file2_data', base64_2);
+                    dataObj.append('file2_name', file2.name);
+                    dataObj.append('file2_mimeType', file2.type);
+                }
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: dataObj
+                });
+                
+                const result = await response.json();
+                
+                if(result.result === "success") {
+                    // ใช้ SweetAlert แจ้งเตือนสำเร็จ
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกสำเร็จ!',
+                        text: 'ข้อมูลของคุณถูกส่งเข้าระบบเรียบร้อยแล้ว',
+                        confirmButtonText: 'ไปหน้าสรุปผล',
+                        confirmButtonColor: '#059669',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // ย้อนกลับไปหน้า Search ทันที
+                            window.location.href = 'search.html';
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'เซิร์ฟเวอร์ตอบกลับ: ' + (result.message || "Unknown error"),
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เชื่อมต่อล้มเหลว',
+                    text: 'กรุณาตรวจสอบอินเทอร์เน็ตหรือลิงก์ API: ' + error.message,
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        }
+    </script>
+</body>
+</html>
