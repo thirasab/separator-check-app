@@ -72,6 +72,12 @@
             max-width: 100%;
             height: auto;
         }
+        /* บังคับรูปในโหมด PDF ให้แสดงเต็มไม่ถูกตัด */
+body.exporting-pdf #modal-content img {
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+}
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -499,32 +505,40 @@
             if(e.target === this) closeModal();
         });
         
-        function downloadPDF() {
-            const element = document.getElementById('modal-content');
-            
-            const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
-            const cmName = cmElement ? cmElement.innerText : 'Unknown';
-            const fileName = `Report_Separator_${cmName}.pdf`;
+  function downloadPDF() {
+    const element = document.getElementById('modal-content');
 
-            const opt = {
-                margin:       [0.3, 0.3, 0.3, 0.3],
-                filename:     fileName,
-                image:        { type: 'jpeg', quality: 0.98 },
-                pagebreak:    { mode: ['css', 'legacy'] },
-                html2canvas:  { scale: 2, useCORS: true }, 
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-            };
-            
-            Swal.fire({
-                title: 'กำลังเตรียมไฟล์ PDF',
-                text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสาร...',
-                timer: 4000,
-                timerProgressBar: true,
-                didOpen: () => { Swal.showLoading() }
-            });
+    const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
+    const cmName = cmElement ? cmElement.innerText : 'Unknown';
+    const fileName = `Report_Separator_${cmName}.pdf`;
 
-            html2pdf().set(opt).from(element).save();
-        }
+    const opt = {
+        margin:       [0.3, 0.3, 0.3, 0.3],
+        filename:     fileName,
+        image:        { type: 'jpeg', quality: 0.98 },
+        pagebreak:    { mode: ['css', 'legacy'] },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    Swal.fire({
+        title: 'กำลังเตรียมไฟล์ PDF',
+        text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสาร...',
+        didOpen: () => { Swal.showLoading() }
+    });
+
+    // เปิดโหมด PDF (ทำให้รูปแสดงเต็ม)
+    document.body.classList.add('exporting-pdf');
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        // คืนค่าหน้าเว็บกลับเป็นปกติหลังเซฟเสร็จ
+        document.body.classList.remove('exporting-pdf');
+        Swal.close();
+    }).catch(() => {
+        document.body.classList.remove('exporting-pdf');
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 'error');
+    });
+}
     </script>
 </body>
 </html>
