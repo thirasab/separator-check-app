@@ -301,30 +301,32 @@
                         <h3 class="font-semibold mb-2">10. หมายเหตุเพิ่มเติม / อัปโหลดรูปภาพ</h3>
                         <textarea name="remark_others" rows="3" class="w-full px-3 py-2 border rounded-md mb-4" placeholder="พบปัญหาอื่นๆ..."></textarea>
                         
-                        <!-- Image Upload with Preview -->
-                        <div class="flex flex-col sm:flex-row gap-4">
+                <!-- Image Upload with Preview (แบบใหม่ ขยายตามรูปจริง) -->
+                        <div class="flex flex-col sm:flex-row gap-4 mt-2">
+                            
                             <!-- File 1 -->
-                            <label for="file1" class="relative flex-1 flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer bg-white hover:bg-gray-100 overflow-hidden transition-all shadow-sm">
-                                <img id="preview1" class="hidden absolute inset-0 w-full h-full object-cover z-0">
-                                <div id="label-file1" class="relative z-10 flex flex-col items-center justify-center bg-white bg-opacity-80 w-full py-2">
-                                    <svg class="w-6 h-6 text-gray-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    <span class="text-sm font-semibold text-gray-600">แนบรูปที่ 1</span>
-                                </div>
-                                <input id="file1" type="file" accept="image/*" onchange="previewImage(this, 'preview1', 'label-file1')">
-                            </label>
+                            <div class="flex-1 bg-white p-3 border-2 border-dashed border-gray-300 rounded-lg shadow-sm flex flex-col justify-center">
+                                <label for="file1" id="box-file1" class="flex flex-col items-center justify-center h-32 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg transition-all">
+                                    <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    <span class="text-sm font-semibold text-gray-500">แตะเพื่อแนบรูปที่ 1</span>
+                                </label>
+                                <input id="file1" type="file" accept="image/*" onchange="previewImage(this, 'preview1', 'box-file1')" class="hidden">
+                                <!-- รูปพรีวิวจะมาแสดงตรงนี้และขยายสูงลงไปด้านล่าง -->
+                                <img id="preview1" class="hidden w-full h-auto rounded-lg shadow-sm border border-gray-200 mt-3 object-contain">
+                            </div>
                             
                             <!-- File 2 -->
-                            <label for="file2" class="relative flex-1 flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer bg-white hover:bg-gray-100 overflow-hidden transition-all shadow-sm">
-                                <img id="preview2" class="hidden absolute inset-0 w-full h-full object-cover z-0">
-                                <div id="label-file2" class="relative z-10 flex flex-col items-center justify-center bg-white bg-opacity-80 w-full py-2">
-                                    <svg class="w-6 h-6 text-gray-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    <span class="text-sm font-semibold text-gray-600">แนบรูปที่ 2</span>
-                                </div>
-                                <input id="file2" type="file" accept="image/*" onchange="previewImage(this, 'preview2', 'label-file2')">
-                            </label>
+                            <div class="flex-1 bg-white p-3 border-2 border-dashed border-gray-300 rounded-lg shadow-sm flex flex-col justify-center">
+                                <label for="file2" id="box-file2" class="flex flex-col items-center justify-center h-32 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-lg transition-all">
+                                    <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    <span class="text-sm font-semibold text-gray-500">แตะเพื่อแนบรูปที่ 2</span>
+                                </label>
+                                <input id="file2" type="file" accept="image/*" onchange="previewImage(this, 'preview2', 'box-file2')" class="hidden">
+                                <!-- รูปพรีวิวจะมาแสดงตรงนี้และขยายสูงลงไปด้านล่าง -->
+                                <img id="preview2" class="hidden w-full h-auto rounded-lg shadow-sm border border-gray-200 mt-3 object-contain">
+                            </div>
+                            
                         </div>
-                    </div>
-
                     <div class="pt-6 flex justify-between">
                         <button type="button" onclick="prevStep()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">กลับ</button>
                         <button type="submit" class="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-105 flex items-center">
@@ -405,24 +407,28 @@
             }
         }
 
-        // พรีวิวรูปภาพก่อนอัปโหลด (Show Image Preview)
-        function previewImage(input, imgId, labelId) {
+ // พรีวิวรูปภาพก่อนอัปโหลด (แบบใหม่)
+        function previewImage(input, imgId, boxId) {
             const file = input.files[0];
             if(file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    // โชว์รูปและให้ขนาดขยายตามจริง
                     const img = document.getElementById(imgId);
                     img.src = e.target.result;
-                    img.classList.remove('hidden'); // แสดงรูปภาพ
+                    img.classList.remove('hidden'); 
                     
-                    const label = document.getElementById(labelId);
-                    label.innerHTML = `<span class="text-blue-700 font-bold text-xs bg-white bg-opacity-90 px-2 py-1 rounded shadow">✓ เปลี่ยนรูปภาพ</span>`;
+                    // ปรับปุ่มแนบรูปให้เล็กลง และเปลี่ยนเป็นคำว่า "เปลี่ยนรูป"
+                    const box = document.getElementById(boxId);
+                    box.classList.remove('h-32');
+                    box.classList.add('h-12', 'bg-blue-50', 'border-blue-200');
+                    box.innerHTML = `<span class="text-xs font-bold text-blue-700">✓ แตะเพื่อเปลี่ยนรูปภาพ</span>`;
                     
-                    // แจ้งเตือน SweetAlert ให้รู้ว่าแนบรูปสำเร็จ
+                    // แจ้งเตือน
                     const Toast = Swal.mixin({
                         toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true
                     });
-                    Toast.fire({ icon: 'success', title: 'เลือกรูปภาพแล้ว' });
+                    Toast.fire({ icon: 'success', title: 'ดึงรูปภาพสำเร็จ' });
                 }
                 reader.readAsDataURL(file);
             }
