@@ -44,7 +44,7 @@
                 </div>
             </div>
 
-            <form id="form" onsubmit="submitForm(event)" class="space-y-6">
+            <form id="mainForm" onsubmit="submitForm(event)" class="space-y-6">
                 
                 <!-- ================== STEP 1 ================== -->
                 <div id="step-1" class="step-container block">
@@ -301,7 +301,7 @@
                         <h3 class="font-semibold mb-2">10. หมายเหตุเพิ่มเติม / อัปโหลดรูปภาพ</h3>
                         <textarea name="remark_others" rows="3" class="w-full px-3 py-2 border rounded-md mb-4 shadow-sm focus:ring-blue-500 outline-none" placeholder="พบปัญหาอื่นๆ..."></textarea>
                         
-                        <!-- Image Upload with Preview (แยกปุ่มและภาพออกจากกัน ขยายตามภาพจริง) -->
+                        <!-- Image Upload with Preview (แบบใหม่ แยกปุ่มและภาพออกจากกัน ขยายตามภาพจริง) -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             
                             <!-- File 1 -->
@@ -409,38 +409,33 @@
             }
         }
 
-        // ฟังก์ชันลดขนาดภาพ (Compress Image) ก่อนแสดงผลและส่ง
-        function compressImage(base64Str, maxWidth, maxHeight, quality) {
-            return new Promise((resolve) => {
-                let img = new Image();
-                img.src = base64Str;
-                img.onload = () => {
-                    let canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > maxWidth) {
-                            height *= maxWidth / width;
-                            width = maxWidth;
-                        }
-                    } else {
-                        if (height > maxHeight) {
-                            width *= maxHeight / height;
-                            height = maxHeight;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    let ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', quality)); // คืนค่าเป็น JPEG ที่ถูกบีบอัดแล้ว
-                };
-            });
+        // พรีวิวรูปภาพก่อนอัปโหลด (โชว์เต็มใบ ไม่บีบแบน)
+        function previewImage(input, imgId, boxId) {
+            const file = input.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // โชว์รูปและให้ขนาดขยายตามจริง
+                    const img = document.getElementById(imgId);
+                    img.src = e.target.result;
+                    img.classList.remove('hidden'); 
+                    
+                    // ปรับปุ่มแนบรูปให้เล็กลง และเปลี่ยนเป็นคำว่า "เปลี่ยนรูป"
+                    const box = document.getElementById(boxId);
+                    box.classList.remove('h-24', 'border-dashed', 'border-gray-400', 'bg-gray-50');
+                    box.classList.add('h-10', 'bg-blue-50', 'border-blue-300', 'border-solid');
+                    box.innerHTML = `<span class="text-xs font-bold text-blue-700">✓ แตะเพื่อเปลี่ยนรูปภาพ</span>`;
+                    
+                    // แจ้งเตือน SweetAlert ให้รู้ว่าแนบรูปสำเร็จ
+                    const Toast = Swal.mixin({
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1500
+                    });
+                    Toast.fire({ icon: 'success', title: 'ดึงรูปภาพสำเร็จ' });
+                }
+                reader.readAsDataURL(file);
+            }
         }
 
-        // อ่านไฟล์เป็น Base64
         function getBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -450,49 +445,10 @@
             });
         }
 
-        // ตัวแปรเก็บ Base64 ที่บีบอัดแล้ว เพื่อรอส่งตอน Submit
-        let compressedFile1 = null;
-        let compressedFile2 = null;
-
-        // พรีวิวรูปภาพและบีบอัดอัตโนมัติ
-        async function previewImage(input, imgId, boxId) {
-            const file = input.files[0];
-            if(file) {
-                // แจ้งว่ากำลังประมวลผล
-                Swal.fire({ title: 'กำลังเตรียมรูปภาพ...', didOpen: () => { Swal.showLoading() }, allowOutsideClick: false });
-
-                const rawBase64 = await getBase64(file);
-                
-                // บีบอัดภาพ (ความกว้างสูงสุด 1200px, คุณภาพ 70%)
-                const compressedBase64 = await compressImage(rawBase64, 1200, 1200, 0.7);
-                
-                // เก็บค่าที่บีบอัดแล้วไว้ในตัวแปร Global
-                if(imgId === 'preview1') {
-                    compressedFile1 = { data: compressedBase64, name: file.name, type: 'image/jpeg' };
-                } else if(imgId === 'preview2') {
-                    compressedFile2 = { data: compressedBase64, name: file.name, type: 'image/jpeg' };
-                }
-
-                // โชว์รูปบนหน้าจอ
-                const img = document.getElementById(imgId);
-                img.src = compressedBase64;
-                img.classList.remove('hidden'); 
-                
-                // ปรับปุ่มแนบรูปให้เล็กลง
-                const box = document.getElementById(boxId);
-                box.classList.remove('h-24', 'border-dashed', 'border-gray-400', 'bg-gray-50');
-                box.classList.add('h-10', 'bg-blue-50', 'border-blue-300', 'border-solid');
-                box.innerHTML = `<span class="text-xs font-bold text-blue-700">✓ แตะเพื่อเปลี่ยนรูปภาพ</span>`;
-                
-                Swal.close();
-                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-                Toast.fire({ icon: 'success', title: 'ดึงและปรับขนาดรูปภาพสำเร็จ' });
-            }
-        }
-
         async function submitForm(e) {
             e.preventDefault();
             
+            // ใช้ SweetAlert สำหรับหน้า Loading
             Swal.fire({
                 title: 'กำลังบันทึกข้อมูล...',
                 html: 'กรุณารอสักครู่ ระบบกำลังอัปโหลดรูปภาพและส่งข้อมูล<br><br><div class="loader mx-auto"></div>',
@@ -510,17 +466,20 @@
             }
 
             try {
-                // ดึงรูปที่ถูกบีบอัดแล้วมาส่ง (แทนที่จะส่งรูปดิบๆ ขนาดใหญ่)
-                if (compressedFile1) {
-                    dataObj.append('file1_data', compressedFile1.data);
-                    dataObj.append('file1_name', compressedFile1.name);
-                    dataObj.append('file1_mimeType', compressedFile1.type);
+                const file1 = document.getElementById('file1').files[0];
+                if (file1) {
+                    const base64_1 = await getBase64(file1);
+                    dataObj.append('file1_data', base64_1);
+                    dataObj.append('file1_name', file1.name);
+                    dataObj.append('file1_mimeType', file1.type);
                 }
 
-                if (compressedFile2) {
-                    dataObj.append('file2_data', compressedFile2.data);
-                    dataObj.append('file2_name', compressedFile2.name);
-                    dataObj.append('file2_mimeType', compressedFile2.type);
+                const file2 = document.getElementById('file2').files[0];
+                if (file2) {
+                    const base64_2 = await getBase64(file2);
+                    dataObj.append('file2_data', base64_2);
+                    dataObj.append('file2_name', file2.name);
+                    dataObj.append('file2_mimeType', file2.type);
                 }
 
                 const response = await fetch(SCRIPT_URL, {
@@ -531,6 +490,7 @@
                 const result = await response.json();
                 
                 if(result.result === "success") {
+                    // ใช้ SweetAlert แจ้งเตือนสำเร็จ
                     Swal.fire({
                         icon: 'success',
                         title: 'บันทึกสำเร็จ!',
@@ -540,6 +500,7 @@
                         allowOutsideClick: false
                     }).then((result) => {
                         if (result.isConfirmed) {
+                            // ย้อนกลับไปหน้า Search ทันที
                             window.location.href = 'search.html';
                         }
                     });
