@@ -530,7 +530,7 @@
                 
                 const result = await response.json();
                 
-                if(result.result === "success") {
+    if(result.result === "success") {
                     Swal.fire({
                         icon: 'success',
                         title: 'บันทึกสำเร็จ!',
@@ -540,7 +540,7 @@
                         allowOutsideClick: false
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = 'search.html';
+                            window.location.href = 'index.html'; // <--- เปลี่ยนให้เด้งกลับไปหน้า index.html
                         }
                     });
                 } else {
