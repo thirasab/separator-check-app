@@ -8,7 +8,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- jQuery (จำเป็นสำหรับ DataTables) -->
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     
     <!-- DataTables CSS & JS -->
@@ -46,38 +46,40 @@
         .swal-loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* คำสั่งบังคับให้แต่ละหัวข้อขึ้นหน้าใหม่ใน PDF ทันที */
+        /* ================== CSS พิเศษสำหรับทำรายงาน PDF ================== */
+        /* คำสั่งบังคับขึ้นหน้าใหม่ */
         .page-break {
             page-break-before: always !important;
             break-before: page !important;
-            padding-top: 10px;
+            padding-top: 15px;
         }
-        
+        /* ป้องกันกล่องข้อมูลตัดขาดครึ่ง */
         .avoid-page-break {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            page-break-before: auto !important;
         }
-        /* บังคับรูปภาพทั้งหมดในรายงาน PDF ให้แสดงสัดส่วนจริง ไม่หดแบน */
-        @media print {
-            #modal-content img {
-                width: 100% !important;
-                height: auto !important;
-                max-height: none !important;
-                object-fit: contain !important;
-            }
+        /* ควบคุมขนาดรูปภาพไม่ให้ล้นหน้ากระดาษ */
+        .pdf-img {
+            width: auto !important;
+            max-width: 100% !important;
+            height: auto !important;
+            max-height: 320px !important;
+            object-fit: contain !important;
+            display: block;
+            margin: 0 auto;
         }
-        
-        /* เผื่อกรณีเรนเดอร์ผ่าน html2pdf โดยตรง */
-        #modal-content img {
-            max-width: 100%;
-            height: auto;
+        /* สไตล์ที่จะแสดงผลเฉพาะตอนกดปุ่มโหลด PDF เท่านั้น */
+        body.exporting-pdf * {
+            box-shadow: none !important; /* ปิดเงาทั้งหมด เพื่อความคลีนแบบกระดาษปรินท์ */
         }
-        /* บังคับรูปในโหมด PDF ให้แสดงเต็มไม่ถูกตัด */
-body.exporting-pdf #modal-content img {
-    height: auto !important;
-    max-height: none !important;
-    object-fit: contain !important;
-}
+        body.exporting-pdf .hide-in-pdf {
+            display: none !important; /* ซ่อนข้อความ/ปุ่มที่ไม่จำเป็นใน PDF */
+        }
+        body.exporting-pdf #modal-content {
+            border: none !important;
+            padding: 0 !important;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -124,20 +126,20 @@ body.exporting-pdf #modal-content img {
 
     <!-- Modal สำหรับดูรายละเอียดแบบเต็ม -->
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all flex flex-col">
             
-            <div class="sticky top-0 bg-gray-800 text-white px-6 py-4 flex justify-between items-center rounded-t-xl z-10">
-                <h2 class="text-xl font-bold" id="modal-title">รายละเอียดการตรวจเช็ค</h2>
+            <div class="sticky top-0 bg-gray-800 text-white px-6 py-4 flex justify-between items-center rounded-t-xl z-10 shadow-md">
+                <h2 class="text-xl font-bold" id="modal-title">รายงานผลการตรวจเช็ค</h2>
                 <button onclick="closeModal()" class="text-gray-300 hover:text-white focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <div class="p-6 bg-white" id="modal-content">
+            <div class="p-6 md:p-10 bg-white" id="modal-content">
                 <!-- Content injected via JS -->
             </div>
             
-            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end space-x-3">
+            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex flex-wrap gap-3 justify-end items-center border-t">
                 <button onclick="downloadPDF()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded shadow transition flex items-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     โหลดเป็น PDF
@@ -157,9 +159,9 @@ body.exporting-pdf #modal-content img {
             if(!status) return '<span class="text-gray-400">-</span>';
             const s = String(status).toLowerCase().trim();
             if(s === 'normal' || (s.includes('ปกติ') && !s.includes('ไม่'))) {
-                return `<span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-md bg-green-100 text-green-800 border border-green-200 shadow-sm">ปกติ</span>`;
+                return `<span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded bg-green-100 text-green-800 border border-green-200">ปกติ</span>`;
             } else {
-                return `<span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-md bg-red-100 text-red-800 border border-red-200 shadow-sm">ไม่ปกติ</span>`;
+                return `<span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded bg-red-100 text-red-800 border border-red-200">ไม่ปกติ</span>`;
             }
         }
 
@@ -182,7 +184,6 @@ body.exporting-pdf #modal-content img {
             });
             
             document.getElementById('dataTable').classList.add('hidden');
-            
             if ($.fn.DataTable.isDataTable('#dataTable')) {
                 $('#dataTable').DataTable().destroy();
             }
@@ -196,9 +197,7 @@ body.exporting-pdf #modal-content img {
                     allData = json.data;
                     renderTable(allData);
                     Swal.close();
-                    const Toast = Swal.mixin({
-                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1500
-                    });
+                    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
                     Toast.fire({ icon: 'success', title: 'โหลดข้อมูลสำเร็จ!' });
                 } else {
                     Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ' + json.message, 'error');
@@ -224,17 +223,13 @@ body.exporting-pdf #modal-content img {
                     return `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">ไม่ปกติ</span>`;
                 };
 
-                const cyclone = getMiniBadge(row["ท่อเข้า_Cyclone"]);
-                const rotor = getMiniBadge(row["ผนังกันRotor"]);
-                const timestamp = row["Timestamp"] || '-';
-
                 tr.innerHTML = `
                     <td class="font-medium text-gray-900">${date}</td>
                     <td class="font-bold text-blue-600">${cm}</td>
                     <td>${checker}</td>
-                    <td>${cyclone}</td>
-                    <td>${rotor}</td>
-                    <td class="text-gray-500 text-xs">${timestamp}</td>
+                    <td>${getMiniBadge(row["ท่อเข้า_Cyclone"])}</td>
+                    <td>${getMiniBadge(row["ผนังกันRotor"])}</td>
+                    <td class="text-gray-500 text-xs">${row["Timestamp"] || '-'}</td>
                     <td>
                         <button onclick="viewDetails(${index})" class="text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold py-1 px-3 border border-indigo-200 rounded shadow-sm transition flex items-center">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
@@ -246,190 +241,186 @@ body.exporting-pdf #modal-content img {
             });
 
             document.getElementById('dataTable').classList.remove('hidden');
-            
             $('#dataTable').DataTable({
                 responsive: true,
-                language: {
-                    search: "ค้นหาข้อมูล:",
-                    lengthMenu: "แสดง _MENU_ รายการต่อหน้า",
-                    info: "กำลังแสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
-                    infoEmpty: "ไม่พบข้อมูล",
-                    zeroRecords: "ไม่พบข้อมูลที่ค้นหา",
-                    paginate: { first: "หน้าแรก", last: "หน้าสุดท้าย", next: "ถัดไป", previous: "ก่อนหน้า" }
-                },
+                language: { search: "ค้นหาข้อมูล:", lengthMenu: "แสดง _MENU_ รายการ", info: "กำลังแสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_", infoEmpty: "ไม่พบข้อมูล", zeroRecords: "ไม่พบข้อมูล", paginate: { first: "หน้าแรก", last: "หน้าสุดท้าย", next: "ถัดไป", previous: "ก่อนหน้า" } },
                 order: [[5, 'desc']] 
             });
         }
 
         // ==========================================
-        // Modal & Details Logic (ใส่ class .page-break แยกแต่ละหัวข้อให้เต็มหน้า PDF)
+        // Modal & Details Logic (สวยงาม พร้อมส่งพิมพ์)
         // ==========================================
         function viewDetails(index) {
             const row = allData[index];
             if(!row) return;
 
-            document.getElementById('modal-title').innerText = `รายงานผลการตรวจเช็ค`;
-            
             const html = `
-                <!-- ================== ส่วนที่ 1 (หน้า 1) ================== -->
-                <div class="mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 1: ข้อมูลทั่วไป และ ระยะช่องใบ</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div>
-                            <span class="block text-sm font-medium text-gray-700 mb-1">วันที่ตรวจเช็ค</span>
-                            <div class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-800 font-medium shadow-sm">${row["วันที่ตรวจเช็ค"] ? row["วันที่ตรวจเช็ค"].split(' ')[0] : '-'}</div>
-                        </div>
-                        <div>
-                            <span class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ตรวจเช็ค</span>
-                            <div class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-800 font-medium shadow-sm">${row["ชื่อผู้ตรวจเช็ค"] || '-'}</div>
-                        </div>
-                        <div>
-                            <span class="block text-sm font-medium text-gray-700 mb-1">CM (Cement Mill)</span>
-                            <div class="w-full px-4 py-2 border border-blue-300 rounded-md bg-blue-50 text-blue-700 font-bold shadow-sm uppercase">${row["CM_Number"] || '-'}</div>
-                        </div>
+                <!-- HEADER สำหรับ PDF -->
+                <div class="mb-8 text-center border-b-[3px] border-blue-900 pb-6 avoid-page-break">
+                    <h1 class="text-3xl font-extrabold text-blue-900 tracking-tight mb-4">รายงานผลการตรวจเช็ค Separator</h1>
+                    <div class="inline-flex flex-wrap justify-center gap-4 text-sm bg-blue-50 py-2 px-6 rounded-full border border-blue-200">
+                        <span class="font-semibold text-gray-700">CM Number: <span class="text-blue-700 uppercase ml-1">${row["CM_Number"] || '-'}</span></span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-semibold text-gray-700">วันที่ตรวจเช็ค: <span class="text-blue-700 ml-1">${row["วันที่ตรวจเช็ค"] ? row["วันที่ตรวจเช็ค"].split(' ')[0] : '-'}</span></span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-semibold text-gray-700">ผู้ตรวจเช็ค: <span class="text-blue-700 ml-1">${row["ชื่อผู้ตรวจเช็ค"] || '-'}</span></span>
+                    </div>
+                </div>
+
+                <!-- ================== ส่วนที่ 1 ================== -->
+                <div class="avoid-page-break mb-8">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-blue-600 pl-3 bg-gray-100 py-2 rounded-r">1. ข้อมูลรูปภาพอ้างอิง และ ระยะช่องใบ</h2>
+                    <div class="mb-6 flex justify-center">
+                        <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="pdf-img rounded-lg border shadow-sm" crossorigin="anonymous">
                     </div>
 
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-500 mb-2 font-semibold">ภาพประกอบ / Reference (Separator)</p>
-                        <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="w-full h-auto rounded-lg border object-contain max-h-[400px] bg-gray-50" crossorigin="anonymous">
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">1. ระยะช่องใบ 1,2 (Std: 55 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่1-2(55mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-700">ระยะช่องใบ 1,2 (Std: 55 mm)</span>
+                            <div class="font-bold text-blue-700">${row["Gap_ใบที่1-2(55mm)"] || '-'} <span class="text-xs text-gray-500 font-normal">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">2. ระยะช่องใบ 3,4 (Std: 66 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่3-4(66mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-700">ระยะช่องใบ 3,4 (Std: 66 mm)</span>
+                            <div class="font-bold text-blue-700">${row["Gap_ใบที่3-4(66mm)"] || '-'} <span class="text-xs text-gray-500 font-normal">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">3. ระยะช่องใบ 5,6 (Std: 77 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่5-6(77mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-700">ระยะช่องใบ 5,6 (Std: 77 mm)</span>
+                            <div class="font-bold text-blue-700">${row["Gap_ใบที่5-6(77mm)"] || '-'} <span class="text-xs text-gray-500 font-normal">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">4. ระยะช่องใบ 7,8 (Std: 88 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่7-8(88mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-700">ระยะช่องใบ 7,8 (Std: 88 mm)</span>
+                            <div class="font-bold text-blue-700">${row["Gap_ใบที่7-8(88mm)"] || '-'} <span class="text-xs text-gray-500 font-normal">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">5. ระยะช่องใบ 9,10 (Std: 99 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่9-10(99mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-700">ระยะช่องใบ 9,10 (Std: 99 mm)</span>
+                            <div class="font-bold text-blue-700">${row["Gap_ใบที่9-10(99mm)"] || '-'} <span class="text-xs text-gray-500 font-normal">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">6. ระยะช่องใบ 11,12 (Std: 110 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่11-12(110mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-700">ระยะช่องใบ 11,12 (Std: 110 mm)</span>
+                            <div class="font-bold text-blue-700">${row["Gap_ใบที่11-12(110mm)"] || '-'} <span class="text-xs text-gray-500 font-normal">mm</span></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ================== ส่วนที่ 2 (ขึ้นหน้าใหม่) ================== -->
-                <div class="page-break mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 2: สถานะช่องใบ (Guide Vane)</h2>
-                    <div class="mb-4">
-                        <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="w-full h-auto rounded-lg border max-h-[300px] object-contain bg-gray-50" crossorigin="anonymous">
+                <div class="page-break mb-8">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-blue-600 pl-3 bg-gray-100 py-2 rounded-r">2. สถานะช่องใบ (Guide Vane)</h2>
+                    <div class="mb-4 flex justify-center">
+                        <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="pdf-img rounded-lg border shadow-sm" crossorigin="anonymous">
                     </div>
-                    <div class="bg-white border rounded-lg divide-y divide-gray-200 shadow-sm">
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 1,2</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_1-2"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_1-2_Remark"] || '-'}</span></div>
+                    <div class="border rounded-lg divide-y divide-gray-200 overflow-hidden">
+                        <div class="p-3 bg-white flex flex-col sm:flex-row sm:items-center">
+                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-1 sm:mb-0">ช่องใบที่ 1,2</div>
+                            <div class="w-full sm:w-1/4 mb-1 sm:mb-0">${getStatusBadge(row["GuideVane_1-2"])}</div>
+                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 block">${row["GuideVane_1-2_Remark"] ? '<b>Remark:</b> ' + row["GuideVane_1-2_Remark"] : '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 3,4</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_3-4"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_3-4_Remark"] || '-'}</span></div>
+                        <div class="p-3 bg-gray-50 flex flex-col sm:flex-row sm:items-center">
+                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-1 sm:mb-0">ช่องใบที่ 3,4</div>
+                            <div class="w-full sm:w-1/4 mb-1 sm:mb-0">${getStatusBadge(row["GuideVane_3-4"])}</div>
+                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 block">${row["GuideVane_3-4_Remark"] ? '<b>Remark:</b> ' + row["GuideVane_3-4_Remark"] : '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 5,6</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_5-6"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_5-6_Remark"] || '-'}</span></div>
+                        <div class="p-3 bg-white flex flex-col sm:flex-row sm:items-center">
+                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-1 sm:mb-0">ช่องใบที่ 5,6</div>
+                            <div class="w-full sm:w-1/4 mb-1 sm:mb-0">${getStatusBadge(row["GuideVane_5-6"])}</div>
+                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 block">${row["GuideVane_5-6_Remark"] ? '<b>Remark:</b> ' + row["GuideVane_5-6_Remark"] : '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 7,8</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_7-8"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_7-8_Remark"] || '-'}</span></div>
+                        <div class="p-3 bg-gray-50 flex flex-col sm:flex-row sm:items-center">
+                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-1 sm:mb-0">ช่องใบที่ 7,8</div>
+                            <div class="w-full sm:w-1/4 mb-1 sm:mb-0">${getStatusBadge(row["GuideVane_7-8"])}</div>
+                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 block">${row["GuideVane_7-8_Remark"] ? '<b>Remark:</b> ' + row["GuideVane_7-8_Remark"] : '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 9,10</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_9-10"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_9-10_Remark"] || '-'}</span></div>
+                        <div class="p-3 bg-white flex flex-col sm:flex-row sm:items-center">
+                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-1 sm:mb-0">ช่องใบที่ 9,10</div>
+                            <div class="w-full sm:w-1/4 mb-1 sm:mb-0">${getStatusBadge(row["GuideVane_9-10"])}</div>
+                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 block">${row["GuideVane_9-10_Remark"] ? '<b>Remark:</b> ' + row["GuideVane_9-10_Remark"] : '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 11,12</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_11-12"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_11-12_Remark"] || '-'}</span></div>
+                        <div class="p-3 bg-gray-50 flex flex-col sm:flex-row sm:items-center">
+                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-1 sm:mb-0">ช่องใบที่ 11,12</div>
+                            <div class="w-full sm:w-1/4 mb-1 sm:mb-0">${getStatusBadge(row["GuideVane_11-12"])}</div>
+                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 block">${row["GuideVane_11-12_Remark"] ? '<b>Remark:</b> ' + row["GuideVane_11-12_Remark"] : '-'}</span></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ================== ส่วนที่ 3 (ขึ้นหน้าใหม่) ================== -->
-                <div class="page-break mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
+                <div class="page-break mb-8">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-blue-600 pl-3 bg-gray-100 py-2 rounded-r">3. ตรวจสอบ Cyclone & Chute</h2>
                     
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">3. สภาพท่อเข้า Cyclone</h3>
+                    <div class="avoid-page-break border border-gray-200 rounded-lg p-4 mb-4 flex flex-col sm:flex-row gap-4">
+                        <div class="w-full sm:w-1/3 flex items-center justify-center bg-gray-50 rounded p-1">
+                            <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="pdf-img" crossorigin="anonymous">
+                        </div>
+                        <div class="w-full sm:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">3.1 สภาพท่อเข้า Cyclone</h3>
                             <div class="mb-3">${getStatusBadge(row["ท่อเข้า_Cyclone"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ท่อเข้า_Cyclone_Remark"] || '-'}</div>
+                            <div class="text-sm text-gray-600 border-l-2 border-gray-300 pl-3"><strong>Remark:</strong> ${row["ท่อเข้า_Cyclone_Remark"] || '-'}</div>
                         </div>
                     </div>
 
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">4. สภาพแผ่นกระจายลม</h3>
+                    <div class="avoid-page-break border border-gray-200 rounded-lg p-4 mb-4 flex flex-col sm:flex-row gap-4">
+                        <div class="w-full sm:w-1/3 flex items-center justify-center bg-gray-50 rounded p-1">
+                            <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="pdf-img" crossorigin="anonymous">
+                        </div>
+                        <div class="w-full sm:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">3.2 สภาพแผ่นกระจายลม</h3>
                             <div class="mb-3">${getStatusBadge(row["แผ่นกระจายลม"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["แผ่นกระจายลม_Remark"] || '-'}</div>
+                            <div class="text-sm text-gray-600 border-l-2 border-gray-300 pl-3"><strong>Remark:</strong> ${row["แผ่นกระจายลม_Remark"] || '-'}</div>
                         </div>
                     </div>
 
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">5. การกองวัตถุดิบรอบ Guide vane/ผนัง</h3>
+                    <div class="avoid-page-break border border-gray-200 rounded-lg p-4 mb-4 flex flex-col sm:flex-row gap-4">
+                        <div class="w-full sm:w-1/3 flex items-center justify-center bg-gray-50 rounded p-1">
+                            <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="pdf-img" crossorigin="anonymous">
+                        </div>
+                        <div class="w-full sm:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">3.3 การกองวัตถุดิบรอบ Guide vane/ผนัง</h3>
                             <div class="mb-3">${getStatusBadge(row["กองวัตถุดิบ"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["กองวัตถุดิบ_Remark"] || '-'}</div>
+                            <div class="text-sm text-gray-600 border-l-2 border-gray-300 pl-3"><strong>Remark:</strong> ${row["กองวัตถุดิบ_Remark"] || '-'}</div>
                         </div>
                     </div>
 
-                    <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <div class="w-full md:w-1/3 text-center flex flex-col justify-center">
-                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="w-full h-32 object-cover rounded border mb-2 cursor-pointer" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                            <span class="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow">Std Gap: 15 cm</span>
+                    <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col sm:flex-row gap-4">
+                        <div class="w-full sm:w-1/3 flex flex-col items-center justify-center">
+                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="pdf-img border border-white shadow-sm mb-2" crossorigin="anonymous">
+                            <span class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">Std Gap: 15 cm</span>
                         </div>
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-3">6. ระยะ Chute ลง Rotor (cm)</h3>
+                        <div class="w-full sm:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-3">3.4 ระยะ Chute ลง Rotor (cm)</h3>
                             <div class="grid grid-cols-3 gap-2 mb-3">
                                 <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">ใต้/ออก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_ใต้/ออก"]||'-'}</span></div>
                                 <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">ใต้/ตก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_ใต้/ตก"]||'-'}</span></div>
                                 <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">เหนือ/ออก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_เหนือ/ออก"]||'-'}</span></div>
                             </div>
-                            <div class="text-sm text-gray-600 bg-white p-2 border rounded"><strong>Remark:</strong> ${row["ChuteลงRotor_Remark"] || '-'}</div>
+                            <div class="text-sm text-gray-600 bg-white p-2 border rounded border-l-4 border-l-blue-400"><strong>Remark:</strong> ${row["ChuteลงRotor_Remark"] || '-'}</div>
                         </div>
                     </div>
 
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">7. Chute รับจากปูนเข้า Sep</h3>
+                    <div class="avoid-page-break border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row gap-4">
+                        <div class="w-full sm:w-1/3 flex items-center justify-center bg-gray-50 rounded p-1">
+                            <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="pdf-img" crossorigin="anonymous">
+                        </div>
+                        <div class="w-full sm:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">3.5 Chute รับจากปูนเข้า Sep</h3>
                             <div class="mb-3">${getStatusBadge(row["Chuteเข้าSep"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["Chuteเข้าSep_Remark"] || '-'}</div>
+                            <div class="text-sm text-gray-600 border-l-2 border-gray-300 pl-3"><strong>Remark:</strong> ${row["Chuteเข้าSep_Remark"] || '-'}</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ================== ส่วนที่ 4 (ขึ้นหน้าใหม่) ================== -->
-                <div class="page-break mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย & รูปภาพแนบ</h2>
+                <div class="page-break mb-8">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-blue-600 pl-3 bg-gray-100 py-2 rounded-r">4. ตรวจสอบขั้นสุดท้าย & รูปภาพแนบ</h2>
                     
-                    <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
-                        <h3 class="font-bold text-gray-800 mb-3">8. ระยะ Gap Air Seal (Std: 5 mm)</h3>
-                        <div class="flex flex-col md:flex-row gap-4">
-                            <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                            <div class="w-full md:w-2/3 grid grid-cols-4 gap-2">
+                    <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 shadow-sm">
+                        <h3 class="font-bold text-gray-800 mb-3">4.1 ระยะ Gap Air Seal (Std: 5 mm)</h3>
+                        <div class="flex flex-col sm:flex-row gap-4 items-center">
+                            <div class="w-full sm:w-1/3 flex justify-center bg-white p-1 rounded border">
+                                <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="pdf-img" crossorigin="anonymous">
+                            </div>
+                            <div class="w-full sm:w-2/3 grid grid-cols-4 gap-2">
                                 ${[1,2,3,4,5,6,7,8].map(i => `
-                                    <div class="bg-white border p-2 rounded text-center shadow-sm flex flex-col justify-center">
+                                    <div class="bg-white border p-2 rounded text-center shadow-sm">
                                         <span class="text-xs text-gray-500 block mb-1">จุด ${i}</span>
                                         <span class="font-bold text-blue-700">${row["AirSeal_จุด"+i]||'-'}</span>
                                     </div>
@@ -438,37 +429,44 @@ body.exporting-pdf #modal-content img {
                         </div>
                     </div>
 
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-6 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">9. สภาพผนังกันข้าง Rotor</h3>
+                    <div class="avoid-page-break border border-gray-200 rounded-lg p-4 mb-6 flex flex-col sm:flex-row gap-4">
+                        <div class="w-full sm:w-1/3 flex items-center justify-center bg-gray-50 rounded p-1">
+                            <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="pdf-img" crossorigin="anonymous">
+                        </div>
+                        <div class="w-full sm:w-2/3 flex flex-col justify-center">
+                            <h3 class="font-bold text-gray-800 mb-2">4.2 สภาพผนังกันข้าง Rotor</h3>
                             <div class="mb-3">${getStatusBadge(row["ผนังกันRotor"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ผนังกันRotor_Remark"] || '-'}</div>
+                            <div class="text-sm text-gray-600 border-l-2 border-gray-300 pl-3"><strong>Remark:</strong> ${row["ผนังกันRotor_Remark"] || '-'}</div>
                         </div>
                     </div>
 
-                    <div class="avoid-page-break bg-gray-50 border rounded-lg p-4 mb-6 shadow-sm">
-                        <h3 class="font-bold text-gray-800 mb-3">10. หมายเหตุเพิ่มเติม / รูปภาพ</h3>
-                        <p class="text-sm text-gray-800 bg-white p-4 rounded border border-gray-200 min-h-[60px] mb-4 whitespace-pre-wrap shadow-inner">${row["Remark_อื่นๆ"] || 'ไม่มีหมายเหตุเพิ่มเติม'}</p>
+                    <div class="avoid-page-break border border-gray-200 bg-white rounded-lg p-5">
+                        <h3 class="font-bold text-gray-800 mb-3 text-lg border-b pb-2">หมายเหตุเพิ่มเติม / รูปภาพ</h3>
                         
-                        <div class="flex flex-col sm:flex-row gap-4 mt-2">
+                        <div class="bg-gray-50 p-4 rounded border text-sm text-gray-800 whitespace-pre-wrap mb-6 min-h-[60px]">${row["Remark_อื่นๆ"] || '<span class="text-gray-400 italic">ไม่มีหมายเหตุเพิ่มเติม</span>'}</div>
+                        
+                        <div class="flex flex-col gap-6">
                             ${row["รูปแนบ_1"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm">
-                                    <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
-                                    <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
-                                         onclick="viewImageFull(this.src)" 
-                                         class="w-full h-48 object-cover rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
+                                <div class="bg-white p-3 border border-gray-200 rounded shadow-sm avoid-page-break">
+                                    <p class="text-sm font-semibold text-gray-600 mb-3 border-l-4 border-indigo-500 pl-2">รูปแนบ 1 <span class="text-xs font-normal text-gray-400 hide-in-pdf ml-1">(คลิกเพื่อขยาย)</span></p>
+                                    <div class="flex justify-center bg-gray-50 p-2 rounded">
+                                        <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
+                                             onclick="viewImageFull(this.src)" 
+                                             class="pdf-img cursor-pointer transition hover:opacity-90 rounded border border-gray-300" crossorigin="anonymous">
+                                    </div>
                                 </div>
-                            ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
+                            ` : ''}
                             
                             ${row["รูปแนบ_2"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm">
-                                    <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
-                                    <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
-                                         onclick="viewImageFull(this.src)" 
-                                         class="w-full h-48 object-cover rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
+                                <div class="bg-white p-3 border border-gray-200 rounded shadow-sm avoid-page-break">
+                                    <p class="text-sm font-semibold text-gray-600 mb-3 border-l-4 border-indigo-500 pl-2">รูปแนบ 2 <span class="text-xs font-normal text-gray-400 hide-in-pdf ml-1">(คลิกเพื่อขยาย)</span></p>
+                                    <div class="flex justify-center bg-gray-50 p-2 rounded">
+                                        <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
+                                             onclick="viewImageFull(this.src)" 
+                                             class="pdf-img cursor-pointer transition hover:opacity-90 rounded border border-gray-300" crossorigin="anonymous">
+                                    </div>
                                 </div>
-                            ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -505,40 +503,45 @@ body.exporting-pdf #modal-content img {
             if(e.target === this) closeModal();
         });
         
-  function downloadPDF() {
-    const element = document.getElementById('modal-content');
+        function downloadPDF() {
+            const element = document.getElementById('modal-content');
+            
+            const cmElement = document.querySelector('#modal-content .uppercase.text-blue-700');
+            const cmName = cmElement ? cmElement.innerText : 'Unknown';
+            const fileName = `Report_Separator_${cmName}.pdf`;
 
-    const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
-    const cmName = cmElement ? cmElement.innerText : 'Unknown';
-    const fileName = `Report_Separator_${cmName}.pdf`;
+            const opt = {
+                margin:       [0.4, 0.4, 0.4, 0.4], // ขอบกระดาษขนาด 0.4 นิ้วรอบด้าน
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 1.0 }, // คุณภาพสูงสุด
+                pagebreak:    { mode: ['css', 'legacy'] },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    windowWidth: 1024 // บังคับสร้างเลย์เอาต์หน้าจอคอมฯ ป้องกัน PDF เละเวลาเซฟผ่านมือถือ
+                }, 
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            
+            Swal.fire({
+                title: 'กำลังสร้างเอกสาร PDF',
+                text: 'ระบบกำลังจัดหน้าให้สวยงาม กรุณารอสักครู่...',
+                timer: 4500,
+                timerProgressBar: true,
+                didOpen: () => { Swal.showLoading() }
+            });
 
-    const opt = {
-        margin:       [0.3, 0.3, 0.3, 0.3],
-        filename:     fileName,
-        image:        { type: 'jpeg', quality: 0.98 },
-        pagebreak:    { mode: ['css', 'legacy'] },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
+            // เพิ่ม class exporting-pdf เพื่อลบแสงเงา (Shadow) ออกจากเอกสาร ทำให้ดูเป็นงานพิมพ์ 100%
+            document.body.classList.add('exporting-pdf');
 
-    Swal.fire({
-        title: 'กำลังเตรียมไฟล์ PDF',
-        text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสาร...',
-        didOpen: () => { Swal.showLoading() }
-    });
-
-    // เปิดโหมด PDF (ทำให้รูปแสดงเต็ม)
-    document.body.classList.add('exporting-pdf');
-
-    html2pdf().set(opt).from(element).save().then(() => {
-        // คืนค่าหน้าเว็บกลับเป็นปกติหลังเซฟเสร็จ
-        document.body.classList.remove('exporting-pdf');
-        Swal.close();
-    }).catch(() => {
-        document.body.classList.remove('exporting-pdf');
-        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 'error');
-    });
-}
+            html2pdf().set(opt).from(element).save().then(() => {
+                document.body.classList.remove('exporting-pdf');
+                Swal.close();
+            }).catch(() => {
+                document.body.classList.remove('exporting-pdf');
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ PDF ได้', 'error');
+            });
+        }
     </script>
 </body>
 </html>
