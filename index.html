@@ -1,709 +1,1085 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบค้นหาข้อมูลตรวจเช็ค Separator</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- jQuery (จำเป็นสำหรับ DataTables) -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    
-    <!-- DataTables CSS & JS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- ไลบรารีสำหรับสร้าง PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
-        
-        .dataTables_wrapper .dataTables_filter input {
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            padding: 0.25rem 0.5rem;
-            margin-bottom: 1rem;
-            outline: none;
-        }
-        .dataTables_wrapper .dataTables_filter input:focus { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
-        table.dataTable.no-footer { border-bottom: 1px solid #e5e7eb; }
-        table.dataTable thead th, table.dataTable thead td { border-bottom: 2px solid #e5e7eb; background-color: #f9fafb; }
-        table.dataTable tbody tr { background-color: #ffffff; }
-        table.dataTable tbody tr:nth-child(even) { background-color: #f9fafb; }
-        table.dataTable tbody tr:hover { background-color: #eff6ff; }
-        
-        .modal-active { overflow: hidden; }
-        
-        /* SweetAlert Loader Animation */
-        .swal-loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* ป้องกันกล่องข้อมูลถูกตัดขาดครึ่งหน้ากระดาษ */
-        .avoid-page-break {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-        }
-
-        /* เผื่อกรณีเรนเดอร์ผ่าน html2pdf โดยตรง */
-        #modal-content img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        /* -------------------------------------------
-           [เทคนิคที่ 4] ซ่อน Scrollbar ชั่วคราวตอนแคป PDF เพื่อแก้บัคขอบแหว่ง
-           ------------------------------------------- */
-        html.exporting-pdf, body.exporting-pdf {
-            overflow: hidden !important;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE/Edge */
-        }
-        html.exporting-pdf::-webkit-scrollbar, body.exporting-pdf::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
-        }
-
-        /* -------------------------------------------
-           ชุด CSS สำหรับจัดการหน้า PDF 
-           ------------------------------------------- */
-        body.exporting-pdf #modal-content {
-            background: #ffffff !important;
-            padding: 0 !important;
-        }
-
-        body.exporting-pdf h2 {
-            font-size: 16px !important;
-            margin-bottom: 8px !important;
-            padding-bottom: 6px !important;
-        }
-
-        body.exporting-pdf h3 {
-            font-size: 13px !important;
-            margin-bottom: 6px !important;
-        }
-
-        body.exporting-pdf p,
-        body.exporting-pdf span,
-        body.exporting-pdf div {
-            font-size: 11px;
-        }
-
-        body.exporting-pdf .p-4 {
-            padding: 8px !important;
-        }
-
-        body.exporting-pdf .mb-6 {
-            margin-bottom: 10px !important;
-        }
-        
-        body.exporting-pdf .mb-8 {
-            margin-bottom: 16px !important;
-        }
-
-        body.exporting-pdf .mb-4 {
-            margin-bottom: 8px !important;
-        }
-
-        body.exporting-pdf .gap-4 {
-            gap: 8px !important;
-        }
-
-        /* -------------------------------------------
-           ลดระยะห่างระหว่างหัวข้อ 9 และ 10 ตอน Export PDF
-           ------------------------------------------- */
-        body.exporting-pdf .topic-9 {
-            margin-bottom: 4px !important;
-            padding: 8px !important;
-        }
-
-        body.exporting-pdf .topic-10 {
-            margin-top: 0 !important;
-            margin-bottom: 4px !important;
-            padding: 8px !important;
-            page-break-before: avoid !important;
-            break-before: avoid !important;
-        }
-
-        body.exporting-pdf .topic-10 h3 {
-            margin-bottom: 4px !important;
-        }
-
-        body.exporting-pdf .topic-10 p {
-            min-height: 28px !important;
-            margin-bottom: 6px !important;
-            padding: 6px !important;
-        }
-
-        body.exporting-pdf .topic-10 .attach-img-wrapper {
-            height: 1.25in !important;
-            line-height: 1.25in !important; 
-        }
-
-        body.exporting-pdf .topic-10 .pdf-attach-img {
-            max-height: 1.25in !important;
-            object-fit: contain !important;
-        }
-
-        /* -------------------------------------------
-           ควบคุมขนาดรูปภาพแต่ละประเภทในเอกสาร PDF 
-           ------------------------------------------- */
-        body.exporting-pdf .pdf-ref-img,
-        body.exporting-pdf .pdf-small-img {
-            width: auto !important;
-            height: auto !important;
-            max-width: 100% !important;
-            display: block !important;
-            margin: 0 auto !important;
-        }
-
-        body.exporting-pdf .pdf-ref-img {
-            max-height: 210px !important;
-        }
-
-        body.exporting-pdf .pdf-small-img {
-            max-height: 95px !important;
-        }
-
-        /* ล็อกความสูงกล่องรูปภาพแนบ แก้บัคช่องว่างมหาศาล */
-        body.exporting-pdf .attach-img-wrapper {
-            display: block !important; 
-            text-align: center !important;
-            overflow: hidden !important;
-            background-color: #f9fafb !important;
-        }
-
-        body.exporting-pdf .pdf-attach-img {
-            width: auto !important;
-            height: auto !important;
-            display: inline-block !important; 
-            vertical-align: middle !important;
-            margin: 0 auto !important;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AM Daily Report CRUD</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: #e8eef3;
+      color: #123;
+    }
+    /* ===================== TOOLBAR ===================== */
+    .toolbar {
+      width: calc(100% - 24px);
+      max-width: 430px;
+      margin: 12px auto;
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 12px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    button { font-family: inherit; }
+    .toolbar button,
+    .form-panel button {
+      border: none;
+      color: white;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+      flex: 1 1 auto;
+      min-width: 78px;
+    }
+    .btn-blue   { background: #0a73a8; }
+    .btn-green  { background: #16a05d; }
+    .btn-orange { background: #f28c00; }
+    .btn-red    { background: #c0392b; }
+    .btn-gray   { background: #657786; }
+    /* ===================== FORM OVERLAY ===================== */
+    .form-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .form-overlay.show { display: flex; }
+    .form-panel {
+      width: 100%;
+      max-width: 430px;
+      max-height: 92vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      font-size: 13px;
+      animation: popupIn 0.18s ease-out;
+    }
+    @keyframes popupIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .form-header h3 { margin: 0; color: #0a73a8; }
+    .close-btn {
+      width: 30px; height: 30px;
+      border: none; border-radius: 50%;
+      background: #c0392b; color: #fff;
+      font-size: 22px; line-height: 1;
+      font-weight: bold; cursor: pointer;
+    }
+    .form-panel input,
+    .form-panel textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #cfd6db;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 95px;
+      gap: 6px;
+    }
+    .form-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .form-buttons button { flex: 1; }
+    .photo-form-title {
+      margin: 8px 0 4px;
+      font-weight: bold;
+      color: #0a73a8;
+    }
+    .photo-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+    .photo-form-box {
+      border: 1px dashed #b7c4cc;
+      border-radius: 8px;
+      padding: 6px;
+      background: #f8fafb;
+      text-align: center;
+      font-size: 11px;
+      color: #567;
+    }
+    .photo-form-box img {
+      width: 100%;
+      height: 70px;
+      object-fit: cover;
+      display: none;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      background: #ddd;
+    }
+    /* ===================== REPORT VIEWPORT ===================== */
+    .report-viewport {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0 8px 24px;
+    }
+    .report {
+      width: 390px;
+      flex: 0 0 390px;
+      background: #f4f6f7;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+      position: relative;
+    }
+    @media (max-width: 410px) {
+      .report-viewport {
+        padding: 0 0 24px;
+        overflow: hidden;
+      }
+      .report {
+        transform: scale(calc((100vw - 16px) / 390));
+        transform-origin: top center;
+        margin-bottom: calc((1 - ((100vw - 16px) / 390)) * -1600px);
+      }
+    }
+    /* ===================== CONTENTEDITABLE ===================== */
+    [contenteditable="true"] {
+      outline: 1px dashed transparent;
+      border-radius: 4px;
+    }
+    [contenteditable="true"]:focus {
+      outline-color: #ffcc00;
+      background: rgba(255,255,255,0.5);
+    }
+    /* ===================== HEADER ===================== */
+    .header {
+      height: 120px;
+      background: #0b78ae;
+      color: #fff;
+      padding: 10px 12px;
+      position: relative;
+      display: grid;
+      grid-template-columns: 95px 1fr 80px;
+      gap: 6px;
+      align-items: start;
+    }
+    .logo-container {
+      position: relative;
+    }
+    .logo-img {
+      width: 90px;
+      height: auto;
+      border-radius: 4px;
+      background: #fff;
+      padding: 4px;
+      display: block;
+    }
+    .logo-fallback {
+      display: none;
+      background: #fff;
+      color: #008344;
+      border-radius: 4px;
+      padding: 5px 6px;
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1;
+      text-align: left;
+    }
+    .logo-fallback span {
+      display: block;
+      color: #e2231a;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+    .title h1 {
+      margin: 4px 0 0;
+      font-size: 21px;
+      line-height: 1.05;
+      font-weight: 900;
+    }
+    .title p {
+      margin: 1px 0 6px;
+      font-size: 9px;
+      letter-spacing: 0.4px;
+      font-weight: bold;
+    }
+    .date {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .worker {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      width: 74px;
+      height: 98px;
+      background: #ffd28c;
+      border-radius: 40px 40px 14px 14px;
+      border: 3px solid rgba(255,255,255,0.55);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #053b5f;
+      font-weight: 900;
+      font-size: 11px;
+      text-align: center;
+      gap: 2px;
+    }
+    .worker-img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+    .worker-emoji {
+      font-size: 44px;
+      line-height: 1;
+    }
+    /* ===================== CONTENT ===================== */
+    .content {
+      padding: 0 10px 8px;
+      margin-top: -18px;
+      position: relative;
+      z-index: 2;
+    }
+    .summary {
+      background: #ffffff;
+      border-radius: 9px;
+      border: 2px solid #d9e0e4;
+      padding: 8px 8px 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+      margin-bottom: 8px;
+    }
+    .section-label {
+      display: inline-block;
+      background: #0b78ae;
+      color: #fff;
+      padding: 5px 13px;
+      border-radius: 8px 8px 0 0;
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+    .metric {
+      border-right: 1px solid #d7d7d7;
+      min-height: 44px;
+    }
+    .metric:last-child { border-right: none; }
+    .metric .icon {
+      width: 26px; height: 26px;
+      margin: 0 auto 2px;
+      border-radius: 50%;
+      background: #0b78ae;
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+    }
+    .metric.red .icon   { background: #d63a2f; }
+    .metric.green .icon { background: #0aa859; }
+    .metric .text {
+      font-size: 9px;
+      line-height: 1.05;
+      font-weight: 900;
+    }
+    .metric .num {
+      display: block;
+      font-size: 12px;
+      color: #111;
+    }
+    /* ===================== JOB CARDS ===================== */
+    .empty-job {
+      background: #ffffff;
+      border: 2px dashed #b7c4cc;
+      border-radius: 9px;
+      padding: 14px;
+      text-align: center;
+      color: #678;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .job-card {
+      background: #fff;
+      border-radius: 9px;
+      border: 2px solid #d7dde0;
+      margin-bottom: 7px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+    }
+    .job-code {
+      background: #0b78ae;
+      color: #fff;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 5px 8px 5px 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      align-items: center;
+    }
+    .job-code-text { flex: 1; }
+    .job-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .job-actions button {
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 6px;
+      font-size: 10px;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .edit-job   { background: rgba(242,140,0,0.95); }
+    .delete-job { background: rgba(192,57,43,0.95); }
+    .job-body {
+      display: grid;
+      grid-template-columns: 1fr 116px;
+      gap: 6px;
+      padding: 7px;
+    }
+    .job-text {
+      font-size: 10.5px;
+      line-height: 1.38;
+      font-weight: 600;
+    }
+    .job-text b { color: #064567; }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .progress {
+      flex: 1;
+      height: 9px;
+      background: #dce7dd;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progress div {
+      height: 100%;
+      background: #1aae55;
+      border-radius: 20px;
+    }
+    .photos {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px;
+      align-content: start;
+    }
+    .photo-box {
+      height: 50px;
+      border-radius: 5px;
+      background: linear-gradient(135deg, #d6d6d6, #8e9a90);
+      border: 1px solid #c8c8c8;
+      overflow: hidden;
+      position: relative;
+      display: grid;
+      place-items: center;
+      font-size: 9px;
+      color: #fff;
+      text-align: center;
+    }
+    .photo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* ===================== OPERATOR ===================== */
+    .operator {
+      background: #fff;
+      border-radius: 9px;
+      border: 2px solid #d7dde0;
+      overflow: hidden;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+    .operator-header {
+      background: #0b78ae;
+      color: #fff;
+      font-weight: 900;
+      padding: 6px 10px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .operator-add-btn {
+      background: rgba(255,255,255,0.25);
+      border: 1px solid rgba(255,255,255,0.5);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 11px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-family: inherit;
+    }
+    .operator-list {
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .operator-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 4px 4px 6px;
+      border-bottom: 1px solid #eef1f3;
+      gap: 6px;
+    }
+    .operator-item:last-child { border-bottom: none; }
+    .operator-item .op-icon { font-size: 14px; flex-shrink: 0; }
+    .operator-item .op-name {
+      flex: 1;
+      font-size: 10.5px;
+      line-height: 1.3;
+    }
+    .operator-item .op-role {
+      font-size: 9px;
+      color: #fff;
+      background: #0b78ae;
+      border-radius: 4px;
+      padding: 1px 6px;
+      flex-shrink: 0;
+      font-weight: 800;
+    }
+    .operator-item .op-role.green  { background: #16a05d; }
+    .operator-item .op-role.orange { background: #e67e00; }
+    .operator-item .op-del {
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 10px;
+      width: 20px; height: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      line-height: 1;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+    /* ===================== SAFETY ===================== */
+    .safety {
+      background: #0b78ae;
+      color: #fff;
+      border-radius: 9px 9px 0 0;
+      padding: 7px 8px 5px;
+      margin-top: 2px;
+    }
+    .safety-grid {
+      display: grid;
+      grid-template-columns: 73px repeat(5, 1fr);
+      gap: 5px;
+      align-items: center;
+    }
+    .safety-title {
+      font-size: 22px;
+      line-height: 0.9;
+      font-weight: 900;
+    }
+    .safety-item {
+      text-align: center;
+      font-size: 7.5px;
+      line-height: 1.05;
+      font-weight: 800;
+    }
+    .safety-icon {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: #fff;
+      color: #0b78ae;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 3px;
+      font-size: 14px;
+    }
+    /* ===================== FOOTER ===================== */
+    .footer {
+      background: #0a73a8;
+      color: #fff;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding: 6px 8px 8px;
+      gap: 4px;
+      font-size: 7.5px;
+      text-align: center;
+      font-weight: 800;
+    }
+    .footer div {
+      border-right: 1px solid rgba(255,255,255,0.35);
+    }
+    .footer div:last-child { border-right: none; }
+    .footer-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .footer-brand img {
+      width: 30px;
+      height: auto;
+      border-radius: 3px;
+    }
+    /* ===================== PRINT ===================== */
+    @media print {
+      body { background: white; }
+      .toolbar, .form-overlay, .job-actions, .operator-add-btn, .op-del { display: none !important; }
+      .report-viewport { padding: 0; }
+      .report {
+        box-shadow: none; margin: 0 auto;
+        border-radius: 0; transform: none !important;
+        margin-bottom: 0 !important;
+      }
+      [contenteditable="true"] { outline: none !important; }
+    }
+  </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
 
-    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-        
-        <!-- Header -->
-        <div class="bg-blue-800 p-6 flex flex-col md:flex-row justify-between items-center text-white">
-            <div>
-                <h1 class="text-2xl font-bold">ข้อมูลประวัติการตรวจเช็ค Separator</h1>
-                <p class="text-blue-200 text-sm mt-1">ระบบดึงข้อมูลอัตโนมัติจาก Google Sheets</p>
-            </div>
-            <div class="mt-4 md:mt-0 flex space-x-3">
-                <!-- ส่งค่า true เข้าไปเพื่อบังคับดึงข้อมูลใหม่จาก Sheet -->
-                <button onclick="fetchData(true)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition shadow flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    รีเฟรชข้อมูล
-                </button>
-                <a href="form.html" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md font-semibold transition shadow flex items-center">
-                    + เพิ่มรายการใหม่
-                </a>
-            </div>
+  <!-- ========== TOOLBAR ========== -->
+  <div class="toolbar">
+    <button class="btn-green" onclick="openCreateForm()">+ เพิ่มงาน</button>
+    <button class="btn-blue" onclick="renderJobs()">อัปเดตสรุป</button>
+    <button class="btn-orange" onclick="downloadReportImage()">ดาวน์โหลดภาพ</button>
+    <button class="btn-blue" onclick="window.print()">PDF</button>
+  </div>
+
+  <!-- ========== FORM OVERLAY (JOB) ========== -->
+  <div class="form-overlay" id="formOverlay" onclick="closeFormByBackdrop(event)">
+    <section class="form-panel" onclick="event.stopPropagation()">
+      <div class="form-header">
+        <h3 id="formTitle">เพิ่มรายการงาน</h3>
+        <button class="close-btn" onclick="closeForm()">×</button>
+      </div>
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <input id="newCode" placeholder="รหัสงาน เช่น 3152">
+        <input id="newStatus" placeholder="สถานะ" value="100%">
+      </div>
+      <input id="newMachine" placeholder="เครื่อง/ตำแหน่ง">
+      <textarea id="newDetail" rows="3" placeholder="สรุปรายละเอียดงาน"></textarea>
+      <input id="newPurpose" placeholder="วัตถุประสงค์">
+      <div class="photo-form-title">แนบรูปภาพงาน สูงสุด 4 รูป</div>
+      <div class="photo-form-grid">
+        <div class="photo-form-box">
+          <img id="preview1"><div>รูปที่ 1</div>
+          <input type="file" accept="image/*" onchange="handleFormPhoto(this, 0)">
+        </div>
+        <div class="photo-form-box">
+          <img id="preview2"><div>รูปที่ 2</div>
+          <input type="file" accept="image/*" onchange="handleFormPhoto(this, 1)">
+        </div>
+        <div class="photo-form-box">
+          <img id="preview3"><div>รูปที่ 3</div>
+          <input type="file" accept="image/*" onchange="handleFormPhoto(this, 2)">
+        </div>
+        <div class="photo-form-box">
+          <img id="preview4"><div>รูปที่ 4</div>
+          <input type="file" accept="image/*" onchange="handleFormPhoto(this, 3)">
+        </div>
+      </div>
+      <div class="form-buttons">
+        <button class="btn-green" onclick="saveJob()">บันทึก</button>
+        <button class="btn-gray" onclick="clearForm()">ล้างข้อมูล</button>
+        <button class="btn-red" onclick="closeForm()">ยกเลิก</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ========== FORM OVERLAY (OPERATOR) ========== -->
+  <div class="form-overlay" id="opFormOverlay" onclick="closeOpFormByBackdrop(event)">
+    <section class="form-panel" onclick="event.stopPropagation()">
+      <div class="form-header">
+        <h3>เพิ่มผู้ปฏิบัติงาน</h3>
+        <button class="close-btn" onclick="closeOpForm()">×</button>
+      </div>
+      <input id="opName" placeholder="ชื่อผู้ปฏิบัติงาน">
+      <input id="opRole" placeholder="ตำแหน่ง เช่น ช่างฟิต, ช่างไฟฟ้า">
+      <div class="form-buttons">
+        <button class="btn-green" onclick="addOperator()">เพิ่ม</button>
+        <button class="btn-red" onclick="closeOpForm()">ยกเลิก</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ========== REPORT ========== -->
+  <div class="report-viewport">
+    <main class="report" id="report">
+
+      <!-- ===== HEADER ===== -->
+      <section class="header">
+        <div class="logo-container">
+          <img
+            class="logo-img"
+            id="headerLogo"
+            src="https://raw.githubusercontent.com/boontsongg-dotcom/am_daily-report/main/images/scg-logo.png"
+            alt="SCG Logo"
+            crossorigin="anonymous"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+          >
+          <div class="logo-fallback" id="logoFallback">
+            <span>SCG</span>GREEN
+          </div>
         </div>
 
-        <!-- Table Container -->
-        <div class="p-6 overflow-x-auto min-h-[400px]">
-            <table id="dataTable" class="display responsive nowrap w-full text-sm hidden" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>วันที่ตรวจเช็ค</th>
-                        <th>CM Number</th>
-                        <th>ผู้ตรวจเช็ค</th>
-                        <th>ท่อเข้า Cyclone</th>
-                        <th>ผนังกัน Rotor</th>
-                        <th>เวลาบันทึก (Timestamp)</th>
-                        <th>รายละเอียด</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- Data -->
-                </tbody>
-            </table>
+        <div class="title">
+          <h1 contenteditable="true">สรุปงาน AM บดซีเมนต์</h1>
+          <p contenteditable="true">CEMENT MILL AM DAILY REPORT</p>
+          <div class="date">📅 <span contenteditable="true" id="reportDate"></span></div>
         </div>
-    </div>
 
-    <!-- Modal สำหรับดูรายละเอียดแบบเต็ม -->
-    <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all">
-            
-            <div class="sticky top-0 bg-gray-800 text-white px-6 py-4 flex justify-between items-center rounded-t-xl z-10">
-                <h2 class="text-xl font-bold" id="modal-title">รายละเอียดการตรวจเช็ค</h2>
-                <button onclick="closeModal()" class="text-gray-300 hover:text-white focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            
-            <div class="p-6 bg-white" id="modal-content">
-                <!-- Content injected via JS -->
-            </div>
-            
-            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end space-x-3">
-                <button onclick="downloadPDF()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded shadow transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    โหลดเป็น PDF
-                </button>
-                <button onclick="closeModal()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded shadow transition">ปิดหน้าต่าง</button>
-            </div>
+        <div class="worker" id="workerBadge">
+          <img
+            class="worker-img"
+            id="safetyIcon"
+            src="https://raw.githubusercontent.com/boontsongg-dotcom/am_daily-report/main/images/safety-icon.png"
+            alt="Safety"
+            crossorigin="anonymous"
+            onerror="this.style.display='none'; document.getElementById('workerEmoji').style.display='block';"
+          >
+          <span class="worker-emoji" id="workerEmoji" style="display:none;">👷</span>
+          <span>SAFETY</span>
         </div>
-    </div>
+      </section>
 
-    <!-- Javascript -->
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGKkCzyqUbBun5bW_v38W1_8thC49CbitoPvIITLb4YcNBN37QcW06499woUGH3Q/exec";
-        let allData = [];
-        let dataTable;
+      <!-- ===== CONTENT ===== -->
+      <section class="content">
 
-        function getStatusBadge(status) {
-            if(!status) return '<span class="text-gray-400">-</span>';
-            const s = String(status).toLowerCase().trim();
-            if(s === 'normal' || (s.includes('ปกติ') && !s.includes('ไม่'))) {
-                return `<span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-md bg-green-100 text-green-800 border border-green-200 shadow-sm">ปกติ</span>`;
-            } else {
-                return `<span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-md bg-red-100 text-red-800 border border-red-200 shadow-sm">ไม่ปกติ</span>`;
-            }
+        <!-- สรุปผลการดำเนินงาน -->
+        <div class="summary">
+          <div class="section-label">สรุปผลการดำเนินงาน</div>
+          <div class="metrics">
+            <div class="metric">
+              <div class="icon">👥</div>
+              <div class="text">งานทั้งหมด<span class="num" id="totalJobs">0 งาน</span></div>
+            </div>
+            <div class="metric">
+              <div class="icon">⏱</div>
+              <div class="text">งานสำเร็จ<span class="num" id="doneJobs">0 งาน</span></div>
+            </div>
+            <div class="metric red">
+              <div class="icon">○</div>
+              <div class="text">งานไม่สำเร็จ<span class="num" id="notDoneJobs">0 งาน</span></div>
+            </div>
+            <div class="metric green">
+              <div class="icon">✓</div>
+              <div class="text">งานเสร็จ 100%<span class="num" id="fullJobs">0 งาน</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- JOB LIST -->
+        <div id="jobList">
+          <div class="empty-job">ยังไม่มีรายการงาน<br>กดปุ่ม "เพิ่มงาน" เพื่อเพิ่มรายการ</div>
+        </div>
+
+        <!-- OPERATOR -->
+        <div class="operator">
+          <div class="operator-header">
+            <span>👷 ผู้ปฏิบัติงาน</span>
+            <button class="operator-add-btn" onclick="openOpForm()">+ เพิ่มคน</button>
+          </div>
+          <div class="operator-list" id="operatorList"></div>
+        </div>
+
+        <!-- SAFETY -->
+        <section class="safety">
+          <div class="safety-grid">
+            <div class="safety-title" contenteditable="true">Safety<br>First</div>
+            <div class="safety-item">
+              <div class="safety-icon">⛑</div>
+              <div contenteditable="true">สวม PPE<br>ทุกครั้ง</div>
+            </div>
+            <div class="safety-item">
+              <div class="safety-icon">🔒</div>
+              <div contenteditable="true">Lockout /<br>Tagout</div>
+            </div>
+            <div class="safety-item">
+              <div class="safety-icon">🔎</div>
+              <div contenteditable="true">ตรวจสอบพื้นที่<br>ก่อนทำงาน</div>
+            </div>
+            <div class="safety-item">
+              <div class="safety-icon">👥</div>
+              <div contenteditable="true">ทำงาน<br>เป็นทีม</div>
+            </div>
+            <div class="safety-item">
+              <div class="safety-icon">0</div>
+              <div contenteditable="true">Zero<br>Accident</div>
+            </div>
+          </div>
+        </section>
+
+      </section>
+
+      <!-- ===== FOOTER ===== -->
+      <footer class="footer">
+        <div class="footer-brand">
+          <img
+            src="https://raw.githubusercontent.com/boontsongg-dotcom/am_daily-report/main/images/scg-logo-white.png"
+            alt="SCG"
+            crossorigin="anonymous"
+            onerror="this.style.display='none';"
+          >
+          <span contenteditable="true">SCG GREEN</span>
+        </div>
+        <div contenteditable="true">Reliability</div>
+        <div contenteditable="true">Safety</div>
+        <div contenteditable="true">Teamwork</div>
+        <div contenteditable="true">Continuous<br>Improvement</div>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- ========== html2canvas ========== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- ========== JAVASCRIPT ========== -->
+  <script>
+    /* ========================================================
+       CONFIG - URL รูปภาพจาก GitHub repo ของคุณ
+       ======================================================== */
+    const IMG_BASE = "https://raw.githubusercontent.com/boontsongg-dotcom/am_daily-report/main/images/";
+
+    let jobs = [];
+    let formPhotos = ["", "", "", ""];
+
+    /* ========== OPERATOR DATA ========== */
+    let operators = [
+      { id: "op1", name: "ธีระศักดิ์ บ.",     role: "ผู้ปฏิบัติงานประจำ", fixed: true, color: "" },
+      { id: "op2", name: "ช่างฟิตมิตรสกุณา",   role: "ช่างฟิต",          fixed: true, color: "green" },
+      { id: "op3", name: "ช่างฟิตบ้านแพรก",    role: "ช่างฟิต",          fixed: true, color: "orange" }
+    ];
+
+    function createId() {
+      return Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+    }
+
+    /* ========== AUTO DATE ========== */
+    function setTodayDate() {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, "0");
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const yyyy = now.getFullYear();
+      document.getElementById("reportDate").innerText = dd + "/" + mm + "/" + yyyy;
+    }
+
+    /* ========== OPERATOR CRUD ========== */
+    function renderOperators() {
+      const list = document.getElementById("operatorList");
+      let html = "";
+      operators.forEach((op) => {
+        const roleClass = op.color ? ` ${op.color}` : "";
+        const delBtn = op.fixed
+          ? ""
+          : `<button class="op-del" onclick="removeOperator('${op.id}')" title="ลบ">✕</button>`;
+        html += `
+          <div class="operator-item">
+            <span class="op-icon">👤</span>
+            <span class="op-name">${escapeHTML(op.name)}</span>
+            <span class="op-role${roleClass}">${escapeHTML(op.role)}</span>
+            ${delBtn}
+          </div>`;
+      });
+      list.innerHTML = html;
+    }
+
+    function openOpForm() {
+      document.getElementById("opName").value = "";
+      document.getElementById("opRole").value = "";
+      document.getElementById("opFormOverlay").classList.add("show");
+      setTimeout(() => document.getElementById("opName").focus(), 100);
+    }
+    function closeOpForm() {
+      document.getElementById("opFormOverlay").classList.remove("show");
+    }
+    function closeOpFormByBackdrop(event) {
+      if (event.target.id === "opFormOverlay") closeOpForm();
+    }
+    function addOperator() {
+      const name = document.getElementById("opName").value.trim();
+      const role = document.getElementById("opRole").value.trim() || "ผู้ปฏิบัติงาน";
+      if (!name) { alert("กรุณาระบุชื่อ"); return; }
+      operators.push({ id: createId(), name, role, fixed: false, color: "" });
+      renderOperators();
+      closeOpForm();
+    }
+    function removeOperator(id) {
+      if (!confirm("ต้องการลบผู้ปฏิบัติงานนี้ใช่หรือไม่?")) return;
+      operators = operators.filter(op => op.id !== id);
+      renderOperators();
+    }
+
+    /* ========== JOB FORM ========== */
+    function openCreateForm() {
+      clearForm();
+      document.getElementById("formTitle").innerText = "เพิ่มรายการงาน";
+      document.getElementById("editId").value = "";
+      document.getElementById("formOverlay").classList.add("show");
+      setTimeout(() => document.getElementById("newCode").focus(), 100);
+    }
+    function openEditForm(id) {
+      const job = jobs.find(item => item.id === id);
+      if (!job) return;
+      document.getElementById("formTitle").innerText = "แก้ไขรายการงาน";
+      document.getElementById("editId").value = job.id;
+      document.getElementById("newCode").value = job.code;
+      document.getElementById("newStatus").value = job.status;
+      document.getElementById("newMachine").value = job.machine;
+      document.getElementById("newDetail").value = job.detail;
+      document.getElementById("newPurpose").value = job.purpose;
+      formPhotos = [...job.photos];
+      updateFormPhotoPreviews();
+      document.getElementById("formOverlay").classList.add("show");
+      setTimeout(() => document.getElementById("newCode").focus(), 100);
+    }
+    function closeForm() {
+      document.getElementById("formOverlay").classList.remove("show");
+    }
+    function closeFormByBackdrop(event) {
+      if (event.target.id === "formOverlay") closeForm();
+    }
+    function clearForm() {
+      document.getElementById("editId").value = "";
+      document.getElementById("newCode").value = "";
+      document.getElementById("newMachine").value = "";
+      document.getElementById("newDetail").value = "";
+      document.getElementById("newPurpose").value = "";
+      document.getElementById("newStatus").value = "100%";
+      formPhotos = ["", "", "", ""];
+      document.querySelectorAll(".photo-form-box input").forEach(input => input.value = "");
+      updateFormPhotoPreviews();
+    }
+    function handleFormPhoto(input, index) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        formPhotos[index] = event.target.result;
+        updateFormPhotoPreviews();
+      };
+      reader.readAsDataURL(file);
+    }
+    function updateFormPhotoPreviews() {
+      for (let i = 0; i < 4; i++) {
+        const img = document.getElementById("preview" + (i + 1));
+        if (formPhotos[i]) {
+          img.src = formPhotos[i];
+          img.style.display = "block";
+        } else {
+          img.removeAttribute("src");
+          img.style.display = "none";
         }
+      }
+    }
 
-        function getDirectDriveLink(url) {
-            if (!url) return '';
-            const match = url.match(/\/d\/(.*?)\//);
-            if (match && match[1]) {
-                return `https://lh3.googleusercontent.com/d/${match[1]}`;
-            }
-            return url;
-        }
+    /* ========== JOB CRUD ========== */
+    function saveJob() {
+      const editId = document.getElementById("editId").value;
+      const code    = document.getElementById("newCode").value.trim() || "-";
+      const status  = document.getElementById("newStatus").value.trim() || "0%";
+      const machine = document.getElementById("newMachine").value.trim() || "-";
+      const detail  = document.getElementById("newDetail").value.trim() || "-";
+      const purpose = document.getElementById("newPurpose").value.trim() || "-";
+      const jobData = {
+        id: editId || createId(),
+        code, status, machine, detail, purpose,
+        photos: [...formPhotos]
+      };
+      if (editId) {
+        jobs = jobs.map(item => item.id === editId ? jobData : item);
+      } else {
+        jobs.push(jobData);
+      }
+      renderJobs();
+      closeForm();
+      clearForm();
+    }
+    function deleteJob(id) {
+      if (!confirm("ต้องการลบงานนี้ใช่หรือไม่?")) return;
+      jobs = jobs.filter(item => item.id !== id);
+      renderJobs();
+    }
 
-        // ==========================================
-        // [เทคนิคที่ 3] ใช้ sessionStorage ลดภาระโหลด API
-        // ==========================================
-        async function fetchData(forceRefresh = false) {
-            if (!forceRefresh) {
-                const cachedData = sessionStorage.getItem('separatorData');
-                if (cachedData) {
-                    allData = JSON.parse(cachedData);
-                    renderTable(allData);
-                    return; // ถ้ามีข้อมูลใน Cache ให้ดึงมาแสดงทันทีและจบฟังก์ชันเลย (โหลด 0.1 วิ)
-                }
-            }
+    /* ========== HELPERS ========== */
+    function escapeHTML(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+    function nl2br(text) {
+      return escapeHTML(text).replace(/\n/g, "<br>");
+    }
+    function getPercent(status) {
+      const value = parseInt(String(status).replace("%", "")) || 0;
+      return Math.max(0, Math.min(100, value));
+    }
 
-            Swal.fire({
-                title: 'กำลังดึงข้อมูล...',
-                html: 'รอสักครู่ ระบบกำลังเชื่อมต่อฐานข้อมูล<br><br><div class="swal-loader"></div>',
-                showConfirmButton: false,
-                allowOutsideClick: false,
-                allowEscapeKey: false
-            });
-            
-            document.getElementById('dataTable').classList.add('hidden');
-            
-            if ($.fn.DataTable.isDataTable('#dataTable')) {
-                $('#dataTable').DataTable().destroy();
-            }
-            document.getElementById('tableBody').innerHTML = '';
-
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const json = await response.json();
-
-                if (json.result === 'success') {
-                    allData = json.data;
-                    // อัปเดต Cache ทุกครั้งที่ดึงข้อมูลใหม่สำเร็จ
-                    sessionStorage.setItem('separatorData', JSON.stringify(allData));
-                    
-                    renderTable(allData);
-                    Swal.close();
-                    const Toast = Swal.mixin({
-                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1500
-                    });
-                    Toast.fire({ icon: 'success', title: 'โหลดข้อมูลสำเร็จ!' });
-                } else {
-                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ' + json.message, 'error');
-                }
-            } catch (error) {
-                Swal.fire('เชื่อมต่อล้มเหลว', 'กรุณาตรวจสอบอินเทอร์เน็ต: ' + error.message, 'error');
-                console.error(error);
-            }
-        }
-
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            
-            data.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                const date = row["วันที่ตรวจเช็ค"] ? row["วันที่ตรวจเช็ค"].split(' ')[0] : '-'; 
-                const cm = row["CM_Number"] || '-';
-                const checker = row["ชื่อผู้ตรวจเช็ค"] || '-';
-                
-                const getMiniBadge = (status) => {
-                    const s = String(status||'').toLowerCase().trim();
-                    if(s === 'normal' || (s.includes('ปกติ') && !s.includes('ไม่'))) return `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">ปกติ</span>`;
-                    return `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">ไม่ปกติ</span>`;
-                };
-
-                const cyclone = getMiniBadge(row["ท่อเข้า_Cyclone"]);
-                const rotor = getMiniBadge(row["ผนังกันRotor"]);
-                const timestamp = row["Timestamp"] || '-';
-
-                tr.innerHTML = `
-                    <td class="font-medium text-gray-900">${date}</td>
-                    <td class="font-bold text-blue-600">${cm}</td>
-                    <td>${checker}</td>
-                    <td>${cyclone}</td>
-                    <td>${rotor}</td>
-                    <td class="text-gray-500 text-xs">${timestamp}</td>
-                    <td>
-                        <button onclick="viewDetails(${index})" class="text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold py-1 px-3 border border-indigo-200 rounded shadow-sm transition flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                            ดูข้อมูลทั้งหมด
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('dataTable').classList.remove('hidden');
-            
-            $('#dataTable').DataTable({
-                responsive: true,
-                language: {
-                    search: "ค้นหาข้อมูล:",
-                    lengthMenu: "แสดง _MENU_ รายการต่อหน้า",
-                    info: "กำลังแสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ",
-                    infoEmpty: "ไม่พบข้อมูล",
-                    zeroRecords: "ไม่พบข้อมูลที่ค้นหา",
-                    paginate: { first: "หน้าแรก", last: "หน้าสุดท้าย", next: "ถัดไป", previous: "ก่อนหน้า" }
-                },
-                order: [[5, 'desc']] 
-            });
-        }
-
-        // ==========================================
-        // Modal & Details Logic
-        // ==========================================
-        function viewDetails(index) {
-            const row = allData[index];
-            if(!row) return;
-
-            document.getElementById('modal-title').innerText = `รายงานผลการตรวจเช็ค`;
-            
-            const html = `
-                <!-- ================== ส่วนที่ 1 ================== -->
-                <div class="mb-8">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 1: ข้อมูลทั่วไป และ ระยะช่องใบ</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div>
-                            <span class="block text-sm font-medium text-gray-700 mb-1">วันที่ตรวจเช็ค</span>
-                            <div class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-800 font-medium shadow-sm">${row["วันที่ตรวจเช็ค"] ? row["วันที่ตรวจเช็ค"].split(' ')[0] : '-'}</div>
-                        </div>
-                        <div>
-                            <span class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ตรวจเช็ค</span>
-                            <div class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-800 font-medium shadow-sm">${row["ชื่อผู้ตรวจเช็ค"] || '-'}</div>
-                        </div>
-                        <div>
-                            <span class="block text-sm font-medium text-gray-700 mb-1">CM (Cement Mill)</span>
-                            <div class="w-full px-4 py-2 border border-blue-300 rounded-md bg-blue-50 text-blue-700 font-bold shadow-sm uppercase">${row["CM_Number"] || '-'}</div>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-500 mb-2 font-semibold">ภาพประกอบ / Reference (Separator)</p>
-                        <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="pdf-ref-img w-full rounded-lg border bg-gray-50" crossorigin="anonymous">
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">1. ระยะช่องใบ 1,2 (Std: 55 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่1-2(55mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
-                        </div>
-                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">2. ระยะช่องใบ 3,4 (Std: 66 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่3-4(66mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
-                        </div>
-                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">3. ระยะช่องใบ 5,6 (Std: 77 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่5-6(77mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
-                        </div>
-                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">4. ระยะช่องใบ 7,8 (Std: 88 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่7-8(88mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
-                        </div>
-                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">5. ระยะช่องใบ 9,10 (Std: 99 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่9-10(99mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
-                        </div>
-                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-800">6. ระยะช่องใบ 11,12 (Std: 110 mm)</span>
-                            <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่11-12(110mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
-                        </div>
-                    </div>
+    /* ========== RENDER JOBS ========== */
+    function renderJobs() {
+      const jobList = document.getElementById("jobList");
+      if (jobs.length === 0) {
+        jobList.innerHTML = `<div class="empty-job">ยังไม่มีรายการงาน<br>กดปุ่ม "เพิ่มงาน" เพื่อเพิ่มรายการ</div>`;
+        updateSummary();
+        return;
+      }
+      let html = "";
+      jobs.forEach((job, index) => {
+        const percent = getPercent(job.status);
+        const photoHTML = job.photos.map(photo => {
+          if (photo) return `<div class="photo-box"><img src="${photo}"></div>`;
+          return `<div class="photo-box">ไม่มีรูป</div>`;
+        }).join("");
+        html += `
+          <article class="job-card" data-status="${percent}">
+            <div class="job-code">
+              <span class="job-code-text">งานที่ ${index + 1} | รหัสงาน : ${escapeHTML(job.code)}</span>
+              <div class="job-actions">
+                <button class="edit-job" onclick="openEditForm('${job.id}')">แก้ไข</button>
+                <button class="delete-job" onclick="deleteJob('${job.id}')">ลบ</button>
+              </div>
+            </div>
+            <div class="job-body">
+              <div class="job-text">
+                <div><b>เครื่อง/ตำแหน่ง:</b> ${escapeHTML(job.machine)}</div>
+                <div><b>สรุปรายละเอียดงาน:</b> ${nl2br(job.detail)}</div>
+                <div><b>วัตถุประสงค์:</b> ${escapeHTML(job.purpose)}</div>
+                <div class="status-row">
+                  <span>สถานะ:</span>
+                  <div class="progress"><div style="width:${percent}%"></div></div>
+                  <span>${escapeHTML(job.status)}</span>
                 </div>
+              </div>
+              <div class="photos">${photoHTML}</div>
+            </div>
+          </article>`;
+      });
+      jobList.innerHTML = html;
+      updateSummary();
+    }
 
-                <!-- ================== ส่วนที่ 2 ================== -->
-                <div class="mb-8">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 2: สถานะช่องใบ (Guide Vane)</h2>
-                    <div class="mb-4">
-                        <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="pdf-ref-img w-full rounded-lg border bg-gray-50" crossorigin="anonymous">
-                    </div>
-                    <div class="bg-white border rounded-lg divide-y divide-gray-200 shadow-sm">
-                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 1,2</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_1-2"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_1-2_Remark"] || '-'}</span></div>
-                        </div>
-                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 3,4</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_3-4"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_3-4_Remark"] || '-'}</span></div>
-                        </div>
-                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 5,6</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_5-6"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_5-6_Remark"] || '-'}</span></div>
-                        </div>
-                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 7,8</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_7-8"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_7-8_Remark"] || '-'}</span></div>
-                        </div>
-                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 9,10</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_9-10"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_9-10_Remark"] || '-'}</span></div>
-                        </div>
-                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
-                            <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 11,12</div>
-                            <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_11-12"])}</div>
-                            <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_11-12_Remark"] || '-'}</span></div>
-                        </div>
-                    </div>
-                </div>
+    function updateSummary() {
+      const total = jobs.length;
+      let done = 0, full = 0;
+      jobs.forEach(job => {
+        const p = getPercent(job.status);
+        if (p > 0) done++;
+        if (p >= 100) full++;
+      });
+      document.getElementById("totalJobs").innerText   = total + " งาน";
+      document.getElementById("doneJobs").innerText     = done + " งาน";
+      document.getElementById("notDoneJobs").innerText  = (total - done) + " งาน";
+      document.getElementById("fullJobs").innerText     = full + " งาน";
+    }
 
-                <!-- ================== ส่วนที่ 3 ================== -->
-                <div class="mb-8">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
-                    
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">3. สภาพท่อเข้า Cyclone</h3>
-                            <div class="mb-3">${getStatusBadge(row["ท่อเข้า_Cyclone"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ท่อเข้า_Cyclone_Remark"] || '-'}</div>
-                        </div>
-                    </div>
+    /* ==========================================================
+       DOWNLOAD IMAGE - ใช้ html2canvas (แก้ปัญหา error แล้ว)
+       ========================================================== */
+    async function downloadReportImage() {
+      renderJobs();
 
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">4. สภาพแผ่นกระจายลม</h3>
-                            <div class="mb-3">${getStatusBadge(row["แผ่นกระจายลม"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["แผ่นกระจายลม_Remark"] || '-'}</div>
-                        </div>
-                    </div>
+      const report = document.getElementById("report");
 
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">5. การกองวัตถุดิบรอบ Guide vane/ผนัง</h3>
-                            <div class="mb-3">${getStatusBadge(row["กองวัตถุดิบ"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["กองวัตถุดิบ_Remark"] || '-'}</div>
-                        </div>
-                    </div>
-
-                    <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <div class="w-full md:w-1/3 text-center flex flex-col justify-center">
-                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="pdf-small-img w-full rounded border mb-2 cursor-pointer" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                            <span class="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow">Std Gap: 15 cm</span>
-                        </div>
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-3">6. ระยะ Chute ลง Rotor (cm)</h3>
-                            <div class="grid grid-cols-3 gap-2 mb-3">
-                                <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">ใต้/ออก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_ใต้/ออก"]||'-'}</span></div>
-                                <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">ใต้/ตก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_ใต้/ตก"]||'-'}</span></div>
-                                <div class="bg-white p-2 border rounded text-center shadow-sm"><span class="text-xs text-gray-500 block mb-1">เหนือ/ออก</span><span class="font-bold text-blue-700">${row["ChuteลงRotor_เหนือ/ออก"]||'-'}</span></div>
-                            </div>
-                            <div class="text-sm text-gray-600 bg-white p-2 border rounded"><strong>Remark:</strong> ${row["ChuteลงRotor_Remark"] || '-'}</div>
-                        </div>
-                    </div>
-
-                    <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">7. Chute รับจากปูนเข้า Sep</h3>
-                            <div class="mb-3">${getStatusBadge(row["Chuteเข้าSep"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["Chuteเข้าSep_Remark"] || '-'}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ================== ส่วนที่ 4 ================== -->
-                <div class="mb-8">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย</h2>
-                    
-                    <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
-                        <h3 class="font-bold text-gray-800 mb-3">8. ระยะ Gap Air Seal (Std: 5 mm)</h3>
-                        <div class="flex flex-col md:flex-row gap-4">
-                            <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                            <div class="w-full md:w-2/3 grid grid-cols-4 gap-2">
-                                ${[1,2,3,4,5,6,7,8].map(i => `
-                                    <div class="bg-white border p-2 rounded text-center shadow-sm flex flex-col justify-center">
-                                        <span class="text-xs text-gray-500 block mb-1">จุด ${i}</span>
-                                        <span class="font-bold text-blue-700">${row["AirSeal_จุด"+i]||'-'}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="topic-9 bg-white border rounded-lg p-3 mb-1 flex flex-col md:flex-row gap-3 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
-                        <div class="w-full md:w-2/3 flex flex-col justify-center">
-                            <h3 class="font-bold text-gray-800 mb-2">9. สภาพผนังกันข้าง Rotor</h3>
-                            <div class="mb-3">${getStatusBadge(row["ผนังกันRotor"])}</div>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ผนังกันRotor_Remark"] || '-'}</div>
-                        </div>
-                    </div>
-
-                    <!-- หัวข้อที่ 10 แสดงต่อใต้หัวข้อที่ 9 โดยไม่แยก Section ใหม่ -->
-                    <div class="topic-10 bg-gray-50 border rounded-lg p-3 mt-0 mb-2 shadow-sm">
-                        <h3 class="font-bold text-gray-800 mb-1">10. หมายเหตุเพิ่มเติม / รูปภาพ</h3>
-                        <p class="text-sm text-gray-800 bg-white p-2 rounded border border-gray-200 min-h-[32px] mb-2 whitespace-pre-wrap shadow-inner">${row["Remark_อื่นๆ"] || 'ไม่มีหมายเหตุเพิ่มเติม'}</p>
-                        
-                        <div class="flex flex-col sm:flex-row gap-2 mt-1">
-                            ${row["รูปแนบ_1"] ? `
-                                <div class="w-full sm:w-1/2 bg-white p-2 border rounded shadow-sm">
-                                    <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
-                                    <div class="attach-img-wrapper w-full h-36 flex justify-center items-center overflow-hidden bg-gray-50 rounded">
-                                        <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
-                                             onclick="viewImageFull(this.src)" 
-                                             class="pdf-attach-img cursor-pointer hover:opacity-90 transition" crossorigin="anonymous">
-                                    </div>
-                                </div>
-                            ` : '<div class="w-full sm:w-1/2 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-36 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
-                            
-                            ${row["รูปแนบ_2"] ? `
-                                <div class="w-full sm:w-1/2 bg-white p-2 border rounded shadow-sm">
-                                    <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
-                                    <div class="attach-img-wrapper w-full h-36 flex justify-center items-center overflow-hidden bg-gray-50 rounded">
-                                        <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
-                                             onclick="viewImageFull(this.src)" 
-                                             class="pdf-attach-img cursor-pointer hover:opacity-90 transition" crossorigin="anonymous">
-                                    </div>
-                                </div>
-                            ` : '<div class="w-full sm:w-1/2 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-36 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
-                        </div>
-                    </div>
-                </div>
-                <!-- End of Report -->
-            `;
-
-            document.getElementById('modal-content').innerHTML = html;
-            document.getElementById('detailModal').classList.remove('hidden');
-            document.body.classList.add('modal-active');
-        }
-
-        function viewImageFull(src) {
-            Swal.fire({
-                imageUrl: src,
-                imageAlt: 'ภาพแนบ',
-                width: '90%',
-                padding: '1em',
-                showConfirmButton: false,
-                showCloseButton: true,
-                backdrop: `rgba(0,0,0,0.85)`
-            });
-        }
-
-        function closeModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-            document.body.classList.remove('modal-active');
-        }
-
-        $(document).ready(function() {
-            fetchData();
+      /* --- ซ่อนปุ่มที่ไม่ต้องการในภาพ --- */
+      const hideSelectors = [".job-actions", ".operator-add-btn", ".op-del"];
+      const hiddenEls = [];
+      hideSelectors.forEach(sel => {
+        report.querySelectorAll(sel).forEach(el => {
+          hiddenEls.push({ el, prev: el.style.display });
+          el.style.display = "none";
         });
-        
-        document.getElementById('detailModal').addEventListener('click', function(e) {
-            if(e.target === this) closeModal();
+      });
+
+      /* --- ปิด contenteditable outline --- */
+      const editables = report.querySelectorAll("[contenteditable]");
+      editables.forEach(el => { el.style.outline = "none"; });
+
+      /* --- รีเซ็ต transform (สำหรับมือถือ) --- */
+      const origTransform = report.style.transform;
+      const origMarginBottom = report.style.marginBottom;
+      report.style.transform = "none";
+      report.style.marginBottom = "0";
+
+      try {
+        const canvas = await html2canvas(report, {
+          scale: 3,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#ffffff",
+          logging: false,
+          width: 390,
+          windowWidth: 390
         });
-        
-        // ==========================================
-        // [เทคนิคที่ 1 และ 4] โหลด PDF ด้วย Promise และซ่อน Scrollbar
-        // ==========================================
-        function downloadPDF() {
-            const element = document.getElementById('modal-content');
 
-            const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
-            const cmName = cmElement ? cmElement.innerText : 'Unknown';
-            const fileName = `Report_Separator_${cmName}.pdf`;
+        /* --- สร้างชื่อไฟล์พร้อมวันที่ --- */
+        const now = new Date();
+        const dateStr = now.getFullYear() + "-"
+          + String(now.getMonth() + 1).padStart(2, "0") + "-"
+          + String(now.getDate()).padStart(2, "0");
 
-            const opt = {
-                margin: [0.15, 0.15, 0.15, 0.15],
-                filename: fileName,
-                image: { type: 'jpeg', quality: 0.98 },
-                pagebreak: { mode: ['css', 'legacy'], avoid: '.avoid-page-break' },
-                html2canvas: { 
-                    scale: 1.6, 
-                    useCORS: true, 
-                    allowTaint: true, 
-                    scrollY: 0, 
-                    windowWidth: 900 
-                },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait', compress: true }
-            };
+        const link = document.createElement("a");
+        link.download = "AM-Daily-Report-" + dateStr + ".png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
 
-            Swal.fire({
-                title: 'กำลังเตรียมไฟล์ PDF',
-                text: 'กำลังโหลดรูปภาพและจัดหน้าเอกสาร...',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
+      } catch (err) {
+        alert("ไม่สามารถสร้างภาพได้ กรุณาลองใหม่อีกครั้ง");
+      } finally {
+        /* --- คืนค่าทั้งหมด --- */
+        report.style.transform = origTransform;
+        report.style.marginBottom = origMarginBottom;
+        hiddenEls.forEach(({ el, prev }) => { el.style.display = prev; });
+        editables.forEach(el => { el.style.outline = ""; });
+      }
+    }
 
-            // เพิ่ม class เพื่อซ่อน scrollbar และปรับเลย์เอาต์
-            document.documentElement.classList.add('exporting-pdf');
-            document.body.classList.add('exporting-pdf');
+    /* ========== INIT ========== */
+    setTodayDate();
+    renderJobs();
+    renderOperators();
+  </script>
 
-            // สร้าง Promise รอให้รูปภาพทั้งหมดใน element โหลดเสร็จก่อน
-            const images = Array.from(element.querySelectorAll('img'));
-            const imagePromises = images.map(img => {
-                if (img.complete) return Promise.resolve();
-                return new Promise(resolve => {
-                    img.onload = resolve;
-                    img.onerror = resolve; // โหลดไม่ขึ้นก็ข้ามไป ไม่ให้ระบบค้าง
-                });
-            });
-
-            Promise.all(imagePromises).then(() => {
-                // หน่วงด้วย requestAnimationFrame เพื่อให้ Browser เรนเดอร์ CSS ใหม่เสร็จ 100%
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        html2pdf()
-                            .set(opt)
-                            .from(element)
-                            .save()
-                            .then(() => {
-                                document.documentElement.classList.remove('exporting-pdf');
-                                document.body.classList.remove('exporting-pdf');
-                                Swal.close();
-                            })
-                            .catch((error) => {
-                                document.documentElement.classList.remove('exporting-pdf');
-                                document.body.classList.remove('exporting-pdf');
-                                console.error(error);
-                                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 'error');
-                            });
-                    });
-                });
-            });
-        }
-    </script>
 </body>
 </html>
