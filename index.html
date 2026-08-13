@@ -8,7 +8,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- jQuery -->
+    <!-- jQuery (จำเป็นสำหรับ DataTables) -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     
     <!-- DataTables CSS & JS -->
@@ -20,7 +20,7 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- html2pdf -->
+    <!-- ไลบรารีสำหรับสร้าง PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -42,14 +42,15 @@
         
         .modal-active { overflow: hidden; }
         
+        /* SweetAlert Loader Animation */
         .swal-loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* ===== ควบคุมการตัดหน้า PDF และขนาดรูป ===== */
+        /* ===== ควบคุมการตัดหน้า PDF ===== */
         .page-break {
             page-break-before: always !important;
             break-before: page !important;
-            padding-top: 20px;
+            padding-top: 20px; /* เพิ่มระยะห่างนิดหน่อยเวลาขึ้นหน้าใหม่ */
         }
 
         .avoid-page-break {
@@ -65,13 +66,11 @@
 
         #modal-content img {
             max-width: 100% !important;
-            max-height: 250px !important; /* ล็อคความสูงรูปไม่ให้เกิน 250px */
             height: auto !important;
             object-fit: contain !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
             display: block;
-            margin: 0 auto;
         }
 
         .img-wrapper {
@@ -81,12 +80,17 @@
 
         @media print {
             #modal-content img {
-                max-height: 250px !important;
+                width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                object-fit: contain !important;
             }
         }
 
         body.exporting-pdf #modal-content img {
-            max-height: 250px !important;
+            height: auto !important;
+            max-height: none !important;
+            object-fit: contain !important;
         }
     </style>
 </head>
@@ -273,6 +277,7 @@
 
         // ==========================================
         // Modal & Details Logic
+        // *หมายเหตุ: นำคลาส page-break ออกแล้ว เพื่อให้ JS คำนวณความสูงและตัดให้เอง
         // ==========================================
         function viewDetails(index) {
             const row = allData[index];
@@ -299,9 +304,9 @@
                         </div>
                     </div>
 
-                    <div class="mb-4 avoid-page-break text-center">
+                    <div class="mb-4 avoid-page-break">
                         <p class="text-sm text-gray-500 mb-2 font-semibold">ภาพประกอบ / Reference (Separator)</p>
-                        <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="w-full h-auto max-h-[250px] object-contain rounded-lg border bg-gray-50 mx-auto" crossorigin="anonymous">
+                        <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="w-full h-auto max-h-[400px] object-contain rounded-lg border bg-gray-50" crossorigin="anonymous">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -335,8 +340,8 @@
                 <!-- ================== ส่วนที่ 2 ================== -->
                 <div class="mb-6 report-section block-to-measure">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 2: สถานะช่องใบ (Guide Vane)</h2>
-                    <div class="mb-4 img-wrapper avoid-page-break text-center">
-                        <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="w-full h-auto max-h-[200px] object-contain rounded-lg border bg-gray-50 mx-auto" crossorigin="anonymous">
+                    <div class="mb-4 img-wrapper avoid-page-break">
+                        <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="w-full h-auto max-h-[300px] object-contain rounded-lg border bg-gray-50" crossorigin="anonymous">
                     </div>
                     <div class="bg-white border rounded-lg divide-y divide-gray-200 shadow-sm">
                         <div class="p-4 flex flex-col sm:flex-row sm:items-center avoid-page-break">
@@ -377,8 +382,8 @@
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
                     
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <div class="w-full md:w-1/3 img-wrapper text-center">
-                            <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="w-full h-auto max-h-[150px] object-contain rounded cursor-pointer border mx-auto" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-1/3 img-wrapper">
+                            <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="w-full h-auto max-h-[200px] object-contain rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         </div>
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">3. สภาพท่อเข้า Cyclone</h3>
@@ -388,8 +393,8 @@
                     </div>
 
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <div class="w-full md:w-1/3 img-wrapper text-center">
-                            <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="w-full h-auto max-h-[150px] object-contain rounded cursor-pointer border mx-auto" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-1/3 img-wrapper">
+                            <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="w-full h-auto max-h-[200px] object-contain rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         </div>
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">4. สภาพแผ่นกระจายลม</h3>
@@ -399,8 +404,8 @@
                     </div>
 
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <div class="w-full md:w-1/3 img-wrapper text-center">
-                            <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="w-full h-auto max-h-[150px] object-contain rounded cursor-pointer border mx-auto" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-1/3 img-wrapper">
+                            <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="w-full h-auto max-h-[200px] object-contain rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         </div>
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">5. การกองวัตถุดิบรอบ Guide vane/ผนัง</h3>
@@ -411,7 +416,7 @@
 
                     <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
                         <div class="w-full md:w-1/3 text-center flex flex-col justify-center img-wrapper">
-                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="w-full h-auto max-h-[150px] object-contain rounded border mb-2 cursor-pointer mx-auto" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="w-full h-auto max-h-[200px] object-contain rounded border mb-2 cursor-pointer" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                             <span class="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow">Std Gap: 15 cm</span>
                         </div>
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
@@ -426,8 +431,8 @@
                     </div>
 
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <div class="w-full md:w-1/3 img-wrapper text-center">
-                            <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="w-full h-auto max-h-[150px] object-contain rounded cursor-pointer border mx-auto" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-1/3 img-wrapper">
+                            <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="w-full h-auto max-h-[200px] object-contain rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         </div>
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">7. Chute รับจากปูนเข้า Sep</h3>
@@ -444,8 +449,8 @@
                     <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
                         <h3 class="font-bold text-gray-800 mb-3">8. ระยะ Gap Air Seal (Std: 5 mm)</h3>
                         <div class="flex flex-col md:flex-row gap-4">
-                            <div class="w-full md:w-1/3 img-wrapper text-center">
-                                <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="w-full h-auto max-h-[150px] object-contain rounded cursor-pointer border mx-auto" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                            <div class="w-full md:w-1/3 img-wrapper">
+                                <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="w-full h-auto max-h-[200px] object-contain rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                             </div>
                             <div class="w-full md:w-2/3 grid grid-cols-4 gap-2">
                                 ${[1,2,3,4,5,6,7,8].map(i => `
@@ -459,8 +464,8 @@
                     </div>
 
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-6 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <div class="w-full md:w-1/3 img-wrapper text-center">
-                            <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="w-full h-auto max-h-[150px] object-contain rounded cursor-pointer border mx-auto" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <div class="w-full md:w-1/3 img-wrapper">
+                            <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="w-full h-auto max-h-[200px] object-contain rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         </div>
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">9. สภาพผนังกันข้าง Rotor</h3>
@@ -475,22 +480,22 @@
                         
                         <div class="flex flex-col sm:flex-row gap-4 mt-2">
                             ${row["รูปแนบ_1"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm img-wrapper avoid-page-break text-center">
+                                <div class="flex-1 bg-white p-2 border rounded shadow-sm img-wrapper avoid-page-break">
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
                                     <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
                                          onclick="viewImageFull(this.src)" 
-                                         class="w-full h-auto max-h-[200px] object-contain rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition mx-auto" crossorigin="anonymous">
+                                         class="w-full h-auto max-h-[400px] object-contain rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
                                 </div>
-                            ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-auto min-h-[150px] bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
+                            ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-auto min-h-[200px] bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
                             
                             ${row["รูปแนบ_2"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm img-wrapper avoid-page-break text-center">
+                                <div class="flex-1 bg-white p-2 border rounded shadow-sm img-wrapper avoid-page-break">
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
                                     <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
                                          onclick="viewImageFull(this.src)" 
-                                         class="w-full h-auto max-h-[200px] object-contain rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition mx-auto" crossorigin="anonymous">
+                                         class="w-full h-auto max-h-[400px] object-contain rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
                                 </div>
-                            ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-auto min-h-[150px] bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
+                            ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-auto min-h-[200px] bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
                         </div>
                     </div>
                 </div>
@@ -614,10 +619,10 @@
 
             document.body.classList.add('exporting-pdf');
 
-            // รอโหลดภาพครบก่อนวัดความสูง
+            // ขั้นตอนสำคัญ: ต้องรอโหลดภาพครบก่อนถึงจะวัดความสูง (DOM Height) ได้แม่นยำ
             await waitForImages(element);
             
-            // สั่งคำนวณแทรกจุดตัดหน้าอัตโนมัติ
+            // สั่งคำนวณและแทรกจุดตัดหน้าอัตโนมัติ
             autoPageBreak(element);
 
             html2pdf().set(opt).from(element).save().then(() => {
