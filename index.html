@@ -78,6 +78,36 @@ body.exporting-pdf #modal-content img {
     max-height: none !important;
     object-fit: contain !important;
 }
+        /* บังคับขึ้นหน้าใหม่และป้องกันการตัดกลางบล็อก */
+.page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+    padding-top: 10px;
+}
+.avoid-page-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+
+/* หัวข้อห้ามหลุดไปอยู่ท้ายหน้าแบบโดดเดี่ยว */
+h2, h3 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+}
+
+/* คุมรูปภาพทั้งหมดในโหมดปกติ โหมดพิมพ์ และ PDF ให้แสดงสัดส่วนจริง ไม่หดแบน และไม่ถูกตัดกลาง */
+#modal-content img,
+@media print #modal-content img,
+body.exporting-pdf #modal-content img {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: block;
+}
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -505,7 +535,21 @@ body.exporting-pdf #modal-content img {
             if(e.target === this) closeModal();
         });
         
-  function downloadPDF() {
+  // เพิ่มฟังก์ชันรอรูปโหลดครบ เพื่อป้องกันปัญหารูปแหว่งหรือหาย
+function waitForImages(element) {
+    const imgs = element.querySelectorAll('img');
+    const promises = Array.from(imgs).map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+        return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve; // กันระบบค้างในกรณีที่ URL รูปเสีย
+        });
+    });
+    return Promise.all(promises);
+}
+
+// อัปเดตฟังก์ชันดาวน์โหลดเป็น async
+async function downloadPDF() {
     const element = document.getElementById('modal-content');
 
     const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
@@ -516,22 +560,25 @@ body.exporting-pdf #modal-content img {
         margin:       [0.3, 0.3, 0.3, 0.3],
         filename:     fileName,
         image:        { type: 'jpeg', quality: 0.98 },
-        pagebreak:    { mode: ['css', 'legacy'] },
-        html2canvas:  { scale: 2, useCORS: true },
+        // เพิ่ม avoid-all เพื่อให้ระบบพยายามไม่ตัดกลาง element 
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] },
+        // เพิ่ม scrollY: 0 ป้องกันปัญหาเนื้อหาเลื่อนถ้าผู้ใช้เลื่อนหน้าจออยู่
+        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
 
     Swal.fire({
         title: 'กำลังเตรียมไฟล์ PDF',
-        text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสาร...',
+        text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสารและโหลดรูปภาพ...',
         didOpen: () => { Swal.showLoading() }
     });
 
-    // เปิดโหมด PDF (ทำให้รูปแสดงเต็ม)
     document.body.classList.add('exporting-pdf');
+    
+    // รอจนกว่ารูปภาพทั้งหมดใน modal-content จะโหลดเสร็จสมบูรณ์
+    await waitForImages(element);
 
     html2pdf().set(opt).from(element).save().then(() => {
-        // คืนค่าหน้าเว็บกลับเป็นปกติหลังเซฟเสร็จ
         document.body.classList.remove('exporting-pdf');
         Swal.close();
     }).catch(() => {
