@@ -59,6 +59,18 @@
         }
 
         /* -------------------------------------------
+           [เทคนิคที่ 4] ซ่อน Scrollbar ชั่วคราวตอนแคป PDF เพื่อแก้บัคขอบแหว่ง
+           ------------------------------------------- */
+        html.exporting-pdf, body.exporting-pdf {
+            overflow: hidden !important;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        html.exporting-pdf::-webkit-scrollbar, body.exporting-pdf::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        /* -------------------------------------------
            ชุด CSS สำหรับจัดการหน้า PDF 
            ------------------------------------------- */
         body.exporting-pdf #modal-content {
@@ -131,7 +143,7 @@
 
         body.exporting-pdf .topic-10 .attach-img-wrapper {
             height: 1.25in !important;
-            line-height: 1.25in !important; /* จัดกึ่งกลางแนวตั้ง */
+            line-height: 1.25in !important; 
         }
 
         body.exporting-pdf .topic-10 .pdf-attach-img {
@@ -161,7 +173,7 @@
 
         /* ล็อกความสูงกล่องรูปภาพแนบ แก้บัคช่องว่างมหาศาล */
         body.exporting-pdf .attach-img-wrapper {
-            display: block !important; /* เลิกใช้ flex ป้องกันบัคพื้นที่ว่าง */
+            display: block !important; 
             text-align: center !important;
             overflow: hidden !important;
             background-color: #f9fafb !important;
@@ -170,7 +182,7 @@
         body.exporting-pdf .pdf-attach-img {
             width: auto !important;
             height: auto !important;
-            display: inline-block !important; /* ใช้คู่กับ text-align: center */
+            display: inline-block !important; 
             vertical-align: middle !important;
             margin: 0 auto !important;
         }
@@ -187,7 +199,8 @@
                 <p class="text-blue-200 text-sm mt-1">ระบบดึงข้อมูลอัตโนมัติจาก Google Sheets</p>
             </div>
             <div class="mt-4 md:mt-0 flex space-x-3">
-                <button onclick="fetchData()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition shadow flex items-center">
+                <!-- ส่งค่า true เข้าไปเพื่อบังคับดึงข้อมูลใหม่จาก Sheet -->
+                <button onclick="fetchData(true)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold transition shadow flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     รีเฟรชข้อมูล
                 </button>
@@ -268,7 +281,19 @@
             return url;
         }
 
-        async function fetchData() {
+        // ==========================================
+        // [เทคนิคที่ 3] ใช้ sessionStorage ลดภาระโหลด API
+        // ==========================================
+        async function fetchData(forceRefresh = false) {
+            if (!forceRefresh) {
+                const cachedData = sessionStorage.getItem('separatorData');
+                if (cachedData) {
+                    allData = JSON.parse(cachedData);
+                    renderTable(allData);
+                    return; // ถ้ามีข้อมูลใน Cache ให้ดึงมาแสดงทันทีและจบฟังก์ชันเลย (โหลด 0.1 วิ)
+                }
+            }
+
             Swal.fire({
                 title: 'กำลังดึงข้อมูล...',
                 html: 'รอสักครู่ ระบบกำลังเชื่อมต่อฐานข้อมูล<br><br><div class="swal-loader"></div>',
@@ -290,6 +315,9 @@
 
                 if (json.result === 'success') {
                     allData = json.data;
+                    // อัปเดต Cache ทุกครั้งที่ดึงข้อมูลใหม่สำเร็จ
+                    sessionStorage.setItem('separatorData', JSON.stringify(allData));
+                    
                     renderTable(allData);
                     Swal.close();
                     const Toast = Swal.mixin({
@@ -607,7 +635,7 @@
         });
         
         // ==========================================
-        // ฟังก์ชันโหลด PDF
+        // [เทคนิคที่ 1 และ 4] โหลด PDF ด้วย Promise และซ่อน Scrollbar
         // ==========================================
         function downloadPDF() {
             const element = document.getElementById('modal-content');
@@ -619,60 +647,62 @@
             const opt = {
                 margin: [0.15, 0.15, 0.15, 0.15],
                 filename: fileName,
-                image: { 
-                    type: 'jpeg', 
-                    quality: 0.98 
-                },
-                pagebreak: { 
-                    mode: ['css', 'legacy'],
-                    avoid: '.avoid-page-break'
-                },
+                image: { type: 'jpeg', quality: 0.98 },
+                pagebreak: { mode: ['css', 'legacy'], avoid: '.avoid-page-break' },
                 html2canvas: { 
-                    scale: 1.6,
-                    useCORS: true,
-                    allowTaint: true,
-                    scrollY: 0,
-                    windowWidth: 900
+                    scale: 1.6, 
+                    useCORS: true, 
+                    allowTaint: true, 
+                    scrollY: 0, 
+                    windowWidth: 900 
                 },
-                jsPDF: { 
-                    unit: 'in', 
-                    format: 'a4', 
-                    orientation: 'portrait',
-                    compress: true
-                }
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait', compress: true }
             };
 
             Swal.fire({
                 title: 'กำลังเตรียมไฟล์ PDF',
-                text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสาร...',
+                text: 'กำลังโหลดรูปภาพและจัดหน้าเอกสาร...',
                 allowOutsideClick: false,
                 allowEscapeKey: false,
-                didOpen: () => { 
-                    Swal.showLoading(); 
-                }
+                didOpen: () => { Swal.showLoading(); }
             });
 
+            // เพิ่ม class เพื่อซ่อน scrollbar และปรับเลย์เอาต์
+            document.documentElement.classList.add('exporting-pdf');
             document.body.classList.add('exporting-pdf');
 
-            setTimeout(() => {
-                html2pdf()
-                    .set(opt)
-                    .from(element)
-                    .save()
-                    .then(() => {
-                        document.body.classList.remove('exporting-pdf');
-                        Swal.close();
-                    })
-                    .catch((error) => {
-                        document.body.classList.remove('exporting-pdf');
-                        console.error(error);
-                        Swal.fire(
-                            'เกิดข้อผิดพลาด', 
-                            'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 
-                            'error'
-                        );
+            // สร้าง Promise รอให้รูปภาพทั้งหมดใน element โหลดเสร็จก่อน
+            const images = Array.from(element.querySelectorAll('img'));
+            const imagePromises = images.map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve; // โหลดไม่ขึ้นก็ข้ามไป ไม่ให้ระบบค้าง
+                });
+            });
+
+            Promise.all(imagePromises).then(() => {
+                // หน่วงด้วย requestAnimationFrame เพื่อให้ Browser เรนเดอร์ CSS ใหม่เสร็จ 100%
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        html2pdf()
+                            .set(opt)
+                            .from(element)
+                            .save()
+                            .then(() => {
+                                document.documentElement.classList.remove('exporting-pdf');
+                                document.body.classList.remove('exporting-pdf');
+                                Swal.close();
+                            })
+                            .catch((error) => {
+                                document.documentElement.classList.remove('exporting-pdf');
+                                document.body.classList.remove('exporting-pdf');
+                                console.error(error);
+                                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 'error');
+                            });
                     });
-            }, 300);
+                });
+            });
         }
     </script>
 </body>
