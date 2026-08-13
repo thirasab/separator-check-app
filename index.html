@@ -46,39 +46,7 @@
         .swal-loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* คำสั่งบังคับให้แต่ละหัวข้อขึ้นหน้าใหม่ใน PDF ทันที */
-        .page-break {
-            page-break-before: always !important;
-            break-before: page !important;
-            padding-top: 10px;
-        }
-        
-        .avoid-page-break {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-        }
-        /* บังคับรูปภาพทั้งหมดในรายงาน PDF ให้แสดงสัดส่วนจริง ไม่หดแบน */
-        @media print {
-            #modal-content img {
-                width: 100% !important;
-                height: auto !important;
-                max-height: none !important;
-                object-fit: contain !important;
-            }
-        }
-        
-        /* เผื่อกรณีเรนเดอร์ผ่าน html2pdf โดยตรง */
-        #modal-content img {
-            max-width: 100%;
-            height: auto;
-        }
-        /* บังคับรูปในโหมด PDF ให้แสดงเต็มไม่ถูกตัด */
-body.exporting-pdf #modal-content img {
-    height: auto !important;
-    max-height: none !important;
-    object-fit: contain !important;
-}
-        /* บังคับขึ้นหน้าใหม่และป้องกันการตัดกลางบล็อก */
+  /* บังคับขึ้นหน้าใหม่และป้องกันการตัดกลางบล็อก */
 .page-break {
     page-break-before: always !important;
     break-before: page !important;
@@ -108,6 +76,7 @@ body.exporting-pdf #modal-content img {
     break-inside: avoid !important;
     display: block;
 }
+ 
     </style>
 </head>
 <body class="p-4 md:p-8">
