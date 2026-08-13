@@ -46,37 +46,54 @@
         .swal-loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-  /* บังคับขึ้นหน้าใหม่และป้องกันการตัดกลางบล็อก */
-.page-break {
-    page-break-before: always !important;
-    break-before: page !important;
-    padding-top: 10px;
-}
-.avoid-page-break {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-}
+        /* ===== ควบคุมการตัดหน้า PDF ===== */
 
-/* หัวข้อห้ามหลุดไปอยู่ท้ายหน้าแบบโดดเดี่ยว */
-h2, h3 {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-}
+        /* ขึ้นหน้าใหม่ก่อนหัวข้อใหญ่ */
+        .page-break {
+            page-break-before: always !important;
+            break-before: page !important;
+            padding-top: 10px;
+        }
 
-/* คุมรูปภาพทั้งหมดในโหมดปกติ โหมดพิมพ์ และ PDF ให้แสดงสัดส่วนจริง ไม่หดแบน และไม่ถูกตัดกลาง */
-#modal-content img,
-@media print #modal-content img,
-body.exporting-pdf #modal-content img {
-    max-width: 100% !important;
-    width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-    object-fit: contain !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    display: block;
-}
- 
+        /* ห้ามตัดกลางบล็อกหัวข้อ */
+        .section,
+        .avoid-page-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        /* หัวข้อห้ามหลุดไปอยู่ท้ายหน้าแบบโดดเดี่ยว */
+        #modal-content h2,
+        #modal-content h3 {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+        }
+
+        /* รูปภาพในรายงาน — แสดงสัดส่วนจริง ห้ามถูกตัด */
+        #modal-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            object-fit: contain !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            display: block;
+        }
+
+        @media print {
+            #modal-content img {
+                width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                object-fit: contain !important;
+            }
+        }
+
+        /* โหมด export PDF ให้รูปแสดงเต็มไม่ถูกตัด */
+        body.exporting-pdf #modal-content img {
+            height: auto !important;
+            max-height: none !important;
+            object-fit: contain !important;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -261,7 +278,7 @@ body.exporting-pdf #modal-content img {
         }
 
         // ==========================================
-        // Modal & Details Logic (ใส่ class .page-break แยกแต่ละหัวข้อให้เต็มหน้า PDF)
+        // Modal & Details Logic (ใช้ avoid-page-break จัดการ PDF)
         // ==========================================
         function viewDetails(index) {
             const row = allData[index];
@@ -270,8 +287,8 @@ body.exporting-pdf #modal-content img {
             document.getElementById('modal-title').innerText = `รายงานผลการตรวจเช็ค`;
             
             const html = `
-                <!-- ================== ส่วนที่ 1 (หน้า 1) ================== -->
-                <div class="mb-6">
+                <!-- ================== ส่วนที่ 1 ================== -->
+                <div class="mb-6 section avoid-page-break">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 1: ข้อมูลทั่วไป และ ระยะช่องใบ</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
@@ -288,7 +305,8 @@ body.exporting-pdf #modal-content img {
                         </div>
                     </div>
 
-                    <div class="mb-4">
+                    <!-- รูป + คำอธิบายอยู่ในบล็อกเดียวกัน กันภาพหลุดหน้า -->
+                    <div class="mb-4 avoid-page-break">
                         <p class="text-sm text-gray-500 mb-2 font-semibold">ภาพประกอบ / Reference (Separator)</p>
                         <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="w-full h-auto rounded-lg border object-contain max-h-[400px] bg-gray-50" crossorigin="anonymous">
                     </div>
@@ -322,7 +340,7 @@ body.exporting-pdf #modal-content img {
                 </div>
 
                 <!-- ================== ส่วนที่ 2 (ขึ้นหน้าใหม่) ================== -->
-                <div class="page-break mb-6">
+                <div class="mb-6 section avoid-page-break page-break">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 2: สถานะช่องใบ (Guide Vane)</h2>
                     <div class="mb-4">
                         <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="w-full h-auto rounded-lg border max-h-[300px] object-contain bg-gray-50" crossorigin="anonymous">
@@ -362,7 +380,7 @@ body.exporting-pdf #modal-content img {
                 </div>
 
                 <!-- ================== ส่วนที่ 3 (ขึ้นหน้าใหม่) ================== -->
-                <div class="page-break mb-6">
+                <div class="mb-6 section avoid-page-break page-break">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
                     
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
@@ -419,7 +437,7 @@ body.exporting-pdf #modal-content img {
                 </div>
 
                 <!-- ================== ส่วนที่ 4 (ขึ้นหน้าใหม่) ================== -->
-                <div class="page-break mb-6">
+                <div class="mb-6 section avoid-page-break page-break">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย & รูปภาพแนบ</h2>
                     
                     <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
@@ -452,7 +470,7 @@ body.exporting-pdf #modal-content img {
                         
                         <div class="flex flex-col sm:flex-row gap-4 mt-2">
                             ${row["รูปแนบ_1"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm">
+                                <div class="flex-1 bg-white p-2 border rounded shadow-sm avoid-page-break">
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
                                     <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
                                          onclick="viewImageFull(this.src)" 
@@ -461,7 +479,7 @@ body.exporting-pdf #modal-content img {
                             ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
                             
                             ${row["รูปแนบ_2"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm">
+                                <div class="flex-1 bg-white p-2 border rounded shadow-sm avoid-page-break">
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
                                     <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
                                          onclick="viewImageFull(this.src)" 
@@ -504,57 +522,55 @@ body.exporting-pdf #modal-content img {
             if(e.target === this) closeModal();
         });
         
-  // เพิ่มฟังก์ชันรอรูปโหลดครบ เพื่อป้องกันปัญหารูปแหว่งหรือหาย
-function waitForImages(element) {
-    const imgs = element.querySelectorAll('img');
-    const promises = Array.from(imgs).map(img => {
-        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
-        return new Promise(resolve => {
-            img.onload = resolve;
-            img.onerror = resolve; // กันระบบค้างในกรณีที่ URL รูปเสีย
-        });
-    });
-    return Promise.all(promises);
-}
+        // รอให้รูปทุกรูปโหลดเสร็จก่อนสร้าง PDF ป้องกันรูปภาพแหว่ง
+        function waitForImages(element) {
+            const imgs = element.querySelectorAll('img');
+            const promises = Array.from(imgs).map(img => {
+                if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve; // กรณีลิงก์เสีย ก็ให้โหลดต่อได้
+                });
+            });
+            return Promise.all(promises);
+        }
 
-// อัปเดตฟังก์ชันดาวน์โหลดเป็น async
-async function downloadPDF() {
-    const element = document.getElementById('modal-content');
+        async function downloadPDF() {
+            const element = document.getElementById('modal-content');
+            const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
+            const cmName = cmElement ? cmElement.innerText : 'Unknown';
+            const fileName = `Report_Separator_${cmName}.pdf`;
 
-    const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
-    const cmName = cmElement ? cmElement.innerText : 'Unknown';
-    const fileName = `Report_Separator_${cmName}.pdf`;
+            const opt = {
+                margin:       [0.3, 0.3, 0.3, 0.3],
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }, // บังคับไม่ให้ตัดกลางตาม CSS
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },  // กันภาพเบี้ยว/เลื่อน
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
 
-    const opt = {
-        margin:       [0.3, 0.3, 0.3, 0.3],
-        filename:     fileName,
-        image:        { type: 'jpeg', quality: 0.98 },
-        // เพิ่ม avoid-all เพื่อให้ระบบพยายามไม่ตัดกลาง element 
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] },
-        // เพิ่ม scrollY: 0 ป้องกันปัญหาเนื้อหาเลื่อนถ้าผู้ใช้เลื่อนหน้าจออยู่
-        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
+            Swal.fire({
+                title: 'กำลังเตรียมไฟล์ PDF',
+                text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าและประมวลผลรูปภาพ...',
+                didOpen: () => { Swal.showLoading() }
+            });
 
-    Swal.fire({
-        title: 'กำลังเตรียมไฟล์ PDF',
-        text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสารและโหลดรูปภาพ...',
-        didOpen: () => { Swal.showLoading() }
-    });
+            // เปิดโหมด PDF
+            document.body.classList.add('exporting-pdf');
 
-    document.body.classList.add('exporting-pdf');
-    
-    // รอจนกว่ารูปภาพทั้งหมดใน modal-content จะโหลดเสร็จสมบูรณ์
-    await waitForImages(element);
+            // สั่งรอให้รูปทั้งหมดโหลดเสร็จสมบูรณ์ก่อน
+            await waitForImages(element);
 
-    html2pdf().set(opt).from(element).save().then(() => {
-        document.body.classList.remove('exporting-pdf');
-        Swal.close();
-    }).catch(() => {
-        document.body.classList.remove('exporting-pdf');
-        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 'error');
-    });
-}
+            // เริ่มคำสั่งสร้าง PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                document.body.classList.remove('exporting-pdf');
+                Swal.close();
+            }).catch(() => {
+                document.body.classList.remove('exporting-pdf');
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 'error');
+            });
+        }
     </script>
 </body>
 </html>
