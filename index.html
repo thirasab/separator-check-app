@@ -57,42 +57,83 @@
             page-break-inside: avoid !important;
             break-inside: avoid !important;
         }
-        
+
         /* เผื่อกรณีเรนเดอร์ผ่าน html2pdf โดยตรง */
         #modal-content img {
             max-width: 100%;
             height: auto;
         }
 
-        /* จัดการขนาดรูปในโหมด PDF ไม่ให้ล้นหน้า A4 */
-        body.exporting-pdf #modal-content img {
-            max-height: 240px !important; 
-            width: 100% !important;
+        /* -------------------------------------------
+           ชุด CSS ใหม่สำหรับจัดการหน้า PDF (ขนาด A4) 
+           ------------------------------------------- */
+        body.exporting-pdf #modal-content {
+            background: #ffffff !important;
+            padding: 0 !important;
+        }
+
+        body.exporting-pdf .pdf-page {
+            width: 7.67in;
+            min-height: 10.69in;
+            max-height: 10.69in;
+            padding: 0.18in;
+            margin: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+            page-break-after: always;
+        }
+
+        body.exporting-pdf .pdf-page:last-child {
+            page-break-after: auto;
+        }
+
+        body.exporting-pdf h2 {
+            font-size: 16px !important;
+            margin-bottom: 8px !important;
+            padding-bottom: 6px !important;
+        }
+
+        body.exporting-pdf h3 {
+            font-size: 13px !important;
+            margin-bottom: 6px !important;
+        }
+
+        body.exporting-pdf p,
+        body.exporting-pdf span,
+        body.exporting-pdf div {
+            font-size: 11px;
+        }
+
+        body.exporting-pdf .p-4 {
+            padding: 8px !important;
+        }
+
+        body.exporting-pdf .mb-6 {
+            margin-bottom: 10px !important;
+        }
+
+        body.exporting-pdf .mb-4 {
+            margin-bottom: 8px !important;
+        }
+
+        body.exporting-pdf .gap-4 {
+            gap: 8px !important;
+        }
+
+        /* ควบคุมขนาดรูปภาพแต่ละประเภทในเอกสาร PDF */
+        body.exporting-pdf .pdf-ref-img {
+            max-height: 210px !important;
             object-fit: contain !important;
         }
 
-        /* ควบคุมรูปแนบย่อยในหน้าสุดท้ายให้เล็กลงไปอีกนิด จะได้ไม่ล้น */
-        body.exporting-pdf #modal-content .h-48 {
-            height: 160px !important; 
+        body.exporting-pdf .pdf-small-img {
+            max-height: 95px !important;
+            object-fit: contain !important;
         }
 
-        /* ลดช่องว่าง (Margin & Padding) โดยรวมในโหมด PDF เพื่อดึงเนื้อหาให้กระชับขึ้น */
-        body.exporting-pdf .mb-6 { margin-bottom: 1rem !important; }
-        body.exporting-pdf .mb-4 { margin-bottom: 0.75rem !important; }
-        body.exporting-pdf .p-6 { padding: 1rem !important; }
-        body.exporting-pdf .p-4 { padding: 0.75rem !important; }
-
-        /* สร้างคลาสจัดหน้า A4 */
-        .a4-section {
-            page-break-inside: avoid;
-            page-break-after: always;
-            padding-top: 10px;
-            padding-bottom: 10px;
-            box-sizing: border-box;
-        }
-        /* ลบ Page break ของหน้าสุดท้ายทิ้ง เพื่อไม่ให้มีหน้าเปล่าโผล่มา */
-        .a4-section:last-child {
-            page-break-after: auto;
+        body.exporting-pdf .pdf-attach-img {
+            max-height: 220px !important;
+            object-fit: contain !important;
         }
     </style>
 </head>
@@ -278,7 +319,7 @@
         }
 
         // ==========================================
-        // Modal & Details Logic (ใส่ class .a4-section แยกแต่ละหัวข้อให้เต็มหน้า PDF)
+        // Modal & Details Logic (จัดโครงสร้างให้แต่ละส่วนเป็นหน้า A4)
         // ==========================================
         function viewDetails(index) {
             const row = allData[index];
@@ -288,7 +329,7 @@
             
             const html = `
                 <!-- ================== ส่วนที่ 1 (หน้า 1) ================== -->
-                <div class="a4-section mb-6">
+                <section class="pdf-page">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 1: ข้อมูลทั่วไป และ ระยะช่องใบ</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
@@ -307,7 +348,7 @@
 
                     <div class="mb-4">
                         <p class="text-sm text-gray-500 mb-2 font-semibold">ภาพประกอบ / Reference (Separator)</p>
-                        <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="w-full h-auto rounded-lg border object-contain max-h-[400px] bg-gray-50" crossorigin="anonymous">
+                        <img src="https://lh3.googleusercontent.com/d/1fB0YiYEVY87YhMGVOJegLrTP7JBcOjmN" class="pdf-ref-img w-full rounded-lg border bg-gray-50" crossorigin="anonymous">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -336,13 +377,13 @@
                             <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่11-12(110mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- ================== ส่วนที่ 2 (ขึ้นหน้าใหม่) ================== -->
-                <div class="a4-section page-break mb-6">
+                <section class="pdf-page page-break">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 2: สถานะช่องใบ (Guide Vane)</h2>
                     <div class="mb-4">
-                        <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="w-full h-auto rounded-lg border max-h-[300px] object-contain bg-gray-50" crossorigin="anonymous">
+                        <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="pdf-ref-img w-full rounded-lg border bg-gray-50" crossorigin="anonymous">
                     </div>
                     <div class="bg-white border rounded-lg divide-y divide-gray-200 shadow-sm">
                         <div class="p-4 flex flex-col sm:flex-row sm:items-center">
@@ -376,14 +417,14 @@
                             <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_11-12_Remark"] || '-'}</span></div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- ================== ส่วนที่ 3 (ขึ้นหน้าใหม่) ================== -->
-                <div class="a4-section page-break mb-6">
+                <section class="pdf-page page-break">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
                     
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <img src="https://lh3.googleusercontent.com/d/1nMrtF1OJ5tXz-puE5h7ZuUL6OZAHxpO_" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">3. สภาพท่อเข้า Cyclone</h3>
                             <div class="mb-3">${getStatusBadge(row["ท่อเข้า_Cyclone"])}</div>
@@ -392,7 +433,7 @@
                     </div>
 
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <img src="https://lh3.googleusercontent.com/d/1J77Bi5WyN1jVCqToMOx6wxK1rbYx6US5" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">4. สภาพแผ่นกระจายลม</h3>
                             <div class="mb-3">${getStatusBadge(row["แผ่นกระจายลม"])}</div>
@@ -401,7 +442,7 @@
                     </div>
 
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <img src="https://lh3.googleusercontent.com/d/1myQFA5E8NkqFZTsz1W2VsrTk34MJolaV" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">5. การกองวัตถุดิบรอบ Guide vane/ผนัง</h3>
                             <div class="mb-3">${getStatusBadge(row["กองวัตถุดิบ"])}</div>
@@ -411,7 +452,7 @@
 
                     <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
                         <div class="w-full md:w-1/3 text-center flex flex-col justify-center">
-                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="w-full h-32 object-cover rounded border mb-2 cursor-pointer" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                            <img src="https://lh3.googleusercontent.com/d/1kFtHlbPvrQD_z5fECORuxeSDBg7Rnhow" class="pdf-small-img w-full rounded border mb-2 cursor-pointer" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                             <span class="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow">Std Gap: 15 cm</span>
                         </div>
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
@@ -426,23 +467,23 @@
                     </div>
 
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <img src="https://lh3.googleusercontent.com/d/1UiLaihD4CIgfx3-vwtLzPIiN0KurPgM3" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">7. Chute รับจากปูนเข้า Sep</h3>
                             <div class="mb-3">${getStatusBadge(row["Chuteเข้าSep"])}</div>
                             <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["Chuteเข้าSep_Remark"] || '-'}</div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- ================== ส่วนที่ 4 (ขึ้นหน้าใหม่) ================== -->
-                <div class="a4-section page-break mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย & รูปภาพแนบ</h2>
+                <section class="pdf-page page-break">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย</h2>
                     
                     <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
                         <h3 class="font-bold text-gray-800 mb-3">8. ระยะ Gap Air Seal (Std: 5 mm)</h3>
                         <div class="flex flex-col md:flex-row gap-4">
-                            <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                            <img src="https://lh3.googleusercontent.com/d/1j28LAZEmg7N1hchQkqyAt60B7LylQDNN" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                             <div class="w-full md:w-2/3 grid grid-cols-4 gap-2">
                                 ${[1,2,3,4,5,6,7,8].map(i => `
                                     <div class="bg-white border p-2 rounded text-center shadow-sm flex flex-col justify-center">
@@ -455,14 +496,18 @@
                     </div>
 
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-6 flex flex-col md:flex-row gap-4 shadow-sm">
-                        <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="w-full md:w-1/3 h-32 object-cover rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
+                        <img src="https://lh3.googleusercontent.com/d/1I9FR-D4U1smyxD5wXtqpHcxFcZUtjWQJ" class="pdf-small-img w-full md:w-1/3 rounded cursor-pointer border" onclick="viewImageFull(this.src)" crossorigin="anonymous">
                         <div class="w-full md:w-2/3 flex flex-col justify-center">
                             <h3 class="font-bold text-gray-800 mb-2">9. สภาพผนังกันข้าง Rotor</h3>
                             <div class="mb-3">${getStatusBadge(row["ผนังกันRotor"])}</div>
                             <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ผนังกันRotor_Remark"] || '-'}</div>
                         </div>
                     </div>
+                </section>
 
+                <!-- ================== ส่วนที่ 5 (แยกหน้า รูปภาพแนบเพิ่มเติม) ================== -->
+                <section class="pdf-page page-break">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">รูปภาพแนบเพิ่มเติม</h2>
                     <div class="avoid-page-break bg-gray-50 border rounded-lg p-4 mb-6 shadow-sm">
                         <h3 class="font-bold text-gray-800 mb-3">10. หมายเหตุเพิ่มเติม / รูปภาพ</h3>
                         <p class="text-sm text-gray-800 bg-white p-4 rounded border border-gray-200 min-h-[60px] mb-4 whitespace-pre-wrap shadow-inner">${row["Remark_อื่นๆ"] || 'ไม่มีหมายเหตุเพิ่มเติม'}</p>
@@ -473,7 +518,7 @@
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
                                     <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
                                          onclick="viewImageFull(this.src)" 
-                                         class="w-full h-48 object-cover rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
+                                         class="pdf-attach-img w-full rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
                                 </div>
                             ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
                             
@@ -482,12 +527,12 @@
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
                                     <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
                                          onclick="viewImageFull(this.src)" 
-                                         class="w-full h-48 object-cover rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
+                                         class="pdf-attach-img w-full rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
                                 </div>
                             ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
                         </div>
                     </div>
-                </div>
+                </section>
                 <!-- End of Report -->
             `;
 
@@ -521,42 +566,74 @@
             if(e.target === this) closeModal();
         });
         
+        // ==========================================
+        // ฟังก์ชันโหลด PDF (ปรับแต่งใหม่ ให้พอดี A4)
+        // ==========================================
         function downloadPDF() {
             const element = document.getElementById('modal-content');
+
             const cmElement = document.querySelector('#modal-content .text-blue-700.font-bold.uppercase');
             const cmName = cmElement ? cmElement.innerText : 'Unknown';
             const fileName = `Report_Separator_${cmName}.pdf`;
 
             const opt = {
-                margin:       [0.4, 0.4, 0.4, 0.4], 
-                filename:     fileName,
-                image:        { type: 'jpeg', quality: 0.98 },
-                pagebreak:    { mode: ['css', 'legacy'] },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true,
-                    windowWidth: 1024 
+                margin: [0.15, 0.15, 0.15, 0.15],
+                filename: fileName,
+                image: { 
+                    type: 'jpeg', 
+                    quality: 0.98 
                 },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                pagebreak: { 
+                    mode: ['css', 'legacy'],
+                    before: '.page-break',
+                    avoid: '.avoid-page-break'
+                },
+                html2canvas: { 
+                    scale: 1.6,
+                    useCORS: true,
+                    allowTaint: true,
+                    scrollY: 0,
+                    windowWidth: 900
+                },
+                jsPDF: { 
+                    unit: 'in', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true
+                }
             };
 
             Swal.fire({
                 title: 'กำลังเตรียมไฟล์ PDF',
                 text: 'กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสาร...',
-                didOpen: () => { Swal.showLoading() }
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => { 
+                    Swal.showLoading(); 
+                }
             });
 
-            // เปิดโหมด PDF (ทำให้รูปแสดงเต็ม และปรับ Margin)
             document.body.classList.add('exporting-pdf');
 
-            html2pdf().set(opt).from(element).save().then(() => {
-                // คืนค่าหน้าเว็บกลับเป็นปกติหลังเซฟเสร็จ
-                document.body.classList.remove('exporting-pdf');
-                Swal.close();
-            }).catch(() => {
-                document.body.classList.remove('exporting-pdf');
-                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 'error');
-            });
+            setTimeout(() => {
+                html2pdf()
+                    .set(opt)
+                    .from(element)
+                    .save()
+                    .then(() => {
+                        document.body.classList.remove('exporting-pdf');
+                        Swal.close();
+                    })
+                    .catch((error) => {
+                        document.body.classList.remove('exporting-pdf');
+                        console.error(error);
+                        Swal.fire(
+                            'เกิดข้อผิดพลาด', 
+                            'ไม่สามารถสร้างไฟล์ PDF ได้ กรุณาลองใหม่อีกครั้ง', 
+                            'error'
+                        );
+                    });
+            }, 300);
         }
     </script>
 </body>
