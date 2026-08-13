@@ -50,7 +50,7 @@
         .page-break {
             page-break-before: always !important;
             break-before: page !important;
-            padding-top: 20px;
+            padding-top: 20px; /* เพิ่มระยะห่างนิดหน่อยเวลาขึ้นหน้าใหม่ */
         }
 
         .avoid-page-break {
@@ -64,16 +64,13 @@
             break-after: avoid !important;
         }
 
-        /* จำกัดรูปไม่ให้สูงเกินพื้นที่หน้ากระดาษ */
         #modal-content img {
             max-width: 100% !important;
-            max-height: 8in !important;      /* กันรูปล้นด้านล่างหน้า A4 */
             height: auto !important;
             object-fit: contain !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
             display: block;
-            margin: 0 auto;
         }
 
         .img-wrapper {
@@ -85,15 +82,14 @@
             #modal-content img {
                 width: 100% !important;
                 height: auto !important;
-                max-height: 8in !important;
+                max-height: none !important;
                 object-fit: contain !important;
             }
         }
 
-        /* โหมด export PDF */
         body.exporting-pdf #modal-content img {
-            max-height: 8in !important;
             height: auto !important;
+            max-height: none !important;
             object-fit: contain !important;
         }
     </style>
@@ -281,6 +277,7 @@
 
         // ==========================================
         // Modal & Details Logic
+        // *หมายเหตุ: นำคลาส page-break ออกแล้ว เพื่อให้ JS คำนวณความสูงและตัดให้เอง
         // ==========================================
         function viewDetails(index) {
             const row = allData[index];
@@ -483,24 +480,20 @@
                         
                         <div class="flex flex-col sm:flex-row gap-4 mt-2">
                             ${row["รูปแนบ_1"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm avoid-page-break">
+                                <div class="flex-1 bg-white p-2 border rounded shadow-sm img-wrapper avoid-page-break">
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
-                                    <div class="img-wrapper flex justify-center">
-                                        <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
-                                             onclick="viewImageFull(this.src)" 
-                                             class="w-full h-auto max-h-[400px] object-contain rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
-                                    </div>
+                                    <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
+                                         onclick="viewImageFull(this.src)" 
+                                         class="w-full h-auto max-h-[400px] object-contain rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
                                 </div>
                             ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-auto min-h-[200px] bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
                             
                             ${row["รูปแนบ_2"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm avoid-page-break">
+                                <div class="flex-1 bg-white p-2 border rounded shadow-sm img-wrapper avoid-page-break">
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
-                                    <div class="img-wrapper flex justify-center">
-                                        <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
-                                             onclick="viewImageFull(this.src)" 
-                                             class="w-full h-auto max-h-[400px] object-contain rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
-                                    </div>
+                                    <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
+                                         onclick="viewImageFull(this.src)" 
+                                         class="w-full h-auto max-h-[400px] object-contain rounded cursor-pointer border border-gray-200 hover:border-blue-500 hover:opacity-90 transition" crossorigin="anonymous">
                                 </div>
                             ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-auto min-h-[200px] bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
                         </div>
@@ -553,18 +546,6 @@
                 });
             });
             return Promise.all(promises);
-        }
-        
-        function fitImagesToPage(container) {
-            const DPI = 96;
-            const maxImgHeightPx = 8 * DPI; // จำกัดสูงสุด 8 นิ้ว
-            container.querySelectorAll('img').forEach(img => {
-                if (img.getBoundingClientRect().height > maxImgHeightPx) {
-                    img.style.maxHeight = maxImgHeightPx + 'px';
-                    img.style.height = 'auto';
-                    img.style.objectFit = 'contain';
-                }
-            });
         }
 
         function splitLongBlock(block, pageHeightPx) {
@@ -625,7 +606,7 @@
                 margin:       [0.3, 0.3, 0.3, 0.3],
                 filename:     fileName,
                 image:        { type: 'jpeg', quality: 0.98 },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }, //[cite: 1]
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] },
                 html2canvas:  { scale: 2, useCORS: true, scrollY: 0 }, 
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
@@ -638,9 +619,10 @@
 
             document.body.classList.add('exporting-pdf');
 
-            // รอโหลดภาพครบ บีบรูปที่เกิน และคำนวณตัดหน้า 
+            // ขั้นตอนสำคัญ: ต้องรอโหลดภาพครบก่อนถึงจะวัดความสูง (DOM Height) ได้แม่นยำ
             await waitForImages(element);
-            fitImagesToPage(element);
+            
+            // สั่งคำนวณและแทรกจุดตัดหน้าอัตโนมัติ
             autoPageBreak(element);
 
             html2pdf().set(opt).from(element).save().then(() => {
