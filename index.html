@@ -120,20 +120,31 @@
             gap: 8px !important;
         }
 
-        /* ควบคุมขนาดรูปภาพแต่ละประเภทในเอกสาร PDF */
+        /* -------------------------------------------
+           ควบคุมขนาดรูปภาพแต่ละประเภทในเอกสาร PDF 
+           (รักษาสัดส่วนต้นฉบับ 100% และปรับขนาดให้เล็กลง)
+           ------------------------------------------- */
+        body.exporting-pdf .pdf-ref-img,
+        body.exporting-pdf .pdf-small-img,
+        body.exporting-pdf .pdf-attach-img {
+            width: auto !important;      /* ยกเลิก w-full เพื่อให้ความกว้างปรับตามสัดส่วนจริง */
+            height: auto !important;     /* ให้ความสูงปรับตามสัดส่วนจริง */
+            max-width: 100% !important;  /* ป้องกันรูปกว้างทะลุกรอบกระดาษ */
+            display: block !important;
+            margin: 0 auto !important;   /* จัดรูปให้อยู่กึ่งกลางเสมอ */
+        }
+
+        /* กำหนดเพดานความสูง (ถ้าเกินนี้ให้หดลงตามสัดส่วน) */
         body.exporting-pdf .pdf-ref-img {
             max-height: 210px !important;
-            object-fit: contain !important;
         }
 
         body.exporting-pdf .pdf-small-img {
             max-height: 95px !important;
-            object-fit: contain !important;
         }
 
         body.exporting-pdf .pdf-attach-img {
             max-height: 220px !important;
-            object-fit: contain !important;
         }
     </style>
 </head>
