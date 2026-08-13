@@ -46,13 +46,7 @@
         .swal-loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* คำสั่งบังคับให้แต่ละหัวข้อขึ้นหน้าใหม่ใน PDF ทันที */
-        .page-break {
-            page-break-before: always !important;
-            break-before: page !important;
-            padding-top: 10px;
-        }
-        
+        /* ป้องกันกล่องข้อมูลถูกตัดขาดครึ่งหน้ากระดาษ */
         .avoid-page-break {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
@@ -65,26 +59,11 @@
         }
 
         /* -------------------------------------------
-           ชุด CSS ใหม่สำหรับจัดการหน้า PDF (ขนาด A4) 
+           ชุด CSS สำหรับจัดการหน้า PDF 
            ------------------------------------------- */
         body.exporting-pdf #modal-content {
             background: #ffffff !important;
             padding: 0 !important;
-        }
-
-        body.exporting-pdf .pdf-page {
-            width: 7.67in;
-            min-height: 10.69in;
-            max-height: 10.69in;
-            padding: 0.18in;
-            margin: 0;
-            overflow: hidden;
-            box-sizing: border-box;
-            page-break-after: always;
-        }
-
-        body.exporting-pdf .pdf-page:last-child {
-            page-break-after: auto;
         }
 
         body.exporting-pdf h2 {
@@ -111,6 +90,10 @@
         body.exporting-pdf .mb-6 {
             margin-bottom: 10px !important;
         }
+        
+        body.exporting-pdf .mb-8 {
+            margin-bottom: 16px !important;
+        }
 
         body.exporting-pdf .mb-4 {
             margin-bottom: 8px !important;
@@ -127,14 +110,13 @@
         body.exporting-pdf .pdf-ref-img,
         body.exporting-pdf .pdf-small-img,
         body.exporting-pdf .pdf-attach-img {
-            width: auto !important;      /* ยกเลิก w-full เพื่อให้ความกว้างปรับตามสัดส่วนจริง */
-            height: auto !important;     /* ให้ความสูงปรับตามสัดส่วนจริง */
-            max-width: 100% !important;  /* ป้องกันรูปกว้างทะลุกรอบกระดาษ */
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
             display: block !important;
-            margin: 0 auto !important;   /* จัดรูปให้อยู่กึ่งกลางเสมอ */
+            margin: 0 auto !important;
         }
 
-        /* กำหนดเพดานความสูง (ถ้าเกินนี้ให้หดลงตามสัดส่วน) */
         body.exporting-pdf .pdf-ref-img {
             max-height: 210px !important;
         }
@@ -330,7 +312,7 @@
         }
 
         // ==========================================
-        // Modal & Details Logic (จัดโครงสร้างให้แต่ละส่วนเป็นหน้า A4)
+        // Modal & Details Logic (เนื้อหาไหลต่อเนื่อง)
         // ==========================================
         function viewDetails(index) {
             const row = allData[index];
@@ -339,8 +321,8 @@
             document.getElementById('modal-title').innerText = `รายงานผลการตรวจเช็ค`;
             
             const html = `
-                <!-- ================== ส่วนที่ 1 (หน้า 1) ================== -->
-                <section class="pdf-page">
+                <!-- ================== ส่วนที่ 1 ================== -->
+                <div class="mb-8">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 1: ข้อมูลทั่วไป และ ระยะช่องใบ</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
@@ -363,75 +345,75 @@
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
                             <span class="text-sm font-medium text-gray-800">1. ระยะช่องใบ 1,2 (Std: 55 mm)</span>
                             <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่1-2(55mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
                             <span class="text-sm font-medium text-gray-800">2. ระยะช่องใบ 3,4 (Std: 66 mm)</span>
                             <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่3-4(66mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
                             <span class="text-sm font-medium text-gray-800">3. ระยะช่องใบ 5,6 (Std: 77 mm)</span>
                             <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่5-6(77mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
                             <span class="text-sm font-medium text-gray-800">4. ระยะช่องใบ 7,8 (Std: 88 mm)</span>
                             <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่7-8(88mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
                             <span class="text-sm font-medium text-gray-800">5. ระยะช่องใบ 9,10 (Std: 99 mm)</span>
                             <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่9-10(99mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                        <div class="avoid-page-break bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
                             <span class="text-sm font-medium text-gray-800">6. ระยะช่องใบ 11,12 (Std: 110 mm)</span>
                             <div class="font-bold text-lg text-blue-700 bg-white border px-3 py-1 rounded">${row["Gap_ใบที่11-12(110mm)"] || '-'} <span class="text-sm text-gray-500">mm</span></div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <!-- ================== ส่วนที่ 2 (ขึ้นหน้าใหม่) ================== -->
-                <section class="pdf-page page-break">
+                <!-- ================== ส่วนที่ 2 ================== -->
+                <div class="mb-8">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 2: สถานะช่องใบ (Guide Vane)</h2>
                     <div class="mb-4">
                         <img src="https://lh3.googleusercontent.com/d/1nIvh8xEG7UpZeUT65NIwntaYqYbxYR8w" class="pdf-ref-img w-full rounded-lg border bg-gray-50" crossorigin="anonymous">
                     </div>
                     <div class="bg-white border rounded-lg divide-y divide-gray-200 shadow-sm">
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
+                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
                             <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 1,2</div>
                             <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_1-2"])}</div>
                             <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_1-2_Remark"] || '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
+                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
                             <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 3,4</div>
                             <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_3-4"])}</div>
                             <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_3-4_Remark"] || '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
+                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
                             <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 5,6</div>
                             <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_5-6"])}</div>
                             <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_5-6_Remark"] || '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
+                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
                             <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 7,8</div>
                             <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_7-8"])}</div>
                             <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_7-8_Remark"] || '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
+                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
                             <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 9,10</div>
                             <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_9-10"])}</div>
                             <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_9-10_Remark"] || '-'}</span></div>
                         </div>
-                        <div class="p-4 flex flex-col sm:flex-row sm:items-center">
+                        <div class="avoid-page-break p-4 flex flex-col sm:flex-row sm:items-center">
                             <div class="w-full sm:w-1/4 font-medium text-gray-800 mb-2 sm:mb-0">ช่องใบที่ 11,12</div>
                             <div class="w-full sm:w-1/4 mb-2 sm:mb-0">${getStatusBadge(row["GuideVane_11-12"])}</div>
                             <div class="w-full sm:w-2/4"><span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded border block min-h-[30px]">${row["GuideVane_11-12_Remark"] || '-'}</span></div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <!-- ================== ส่วนที่ 3 (ขึ้นหน้าใหม่) ================== -->
-                <section class="pdf-page page-break">
+                <!-- ================== ส่วนที่ 3 ================== -->
+                <div class="mb-8">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 3: ตรวจสอบ Cyclone & Chute</h2>
                     
                     <div class="avoid-page-break bg-white border rounded-lg p-4 mb-4 flex flex-col md:flex-row gap-4 shadow-sm">
@@ -485,10 +467,10 @@
                             <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["Chuteเข้าSep_Remark"] || '-'}</div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <!-- ================== ส่วนที่ 4 (ขึ้นหน้าใหม่) ================== -->
-                <section class="pdf-page page-break">
+                <!-- ================== ส่วนที่ 4 ================== -->
+                <div class="mb-8">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ส่วนที่ 4: ตรวจสอบขั้นสุดท้าย</h2>
                     
                     <div class="avoid-page-break bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
@@ -514,10 +496,10 @@
                             <div class="text-sm text-gray-600 bg-gray-50 p-2 border rounded"><strong>Remark:</strong> ${row["ผนังกันRotor_Remark"] || '-'}</div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <!-- ================== ส่วนที่ 5 (แยกหน้า รูปภาพแนบเพิ่มเติม) ================== -->
-                <section class="pdf-page page-break">
+                <!-- ================== ส่วนที่ 5 ================== -->
+                <div class="mb-8">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">รูปภาพแนบเพิ่มเติม</h2>
                     <div class="avoid-page-break bg-gray-50 border rounded-lg p-4 mb-6 shadow-sm">
                         <h3 class="font-bold text-gray-800 mb-3">10. หมายเหตุเพิ่มเติม / รูปภาพ</h3>
@@ -525,7 +507,7 @@
                         
                         <div class="flex flex-col sm:flex-row gap-4 mt-2">
                             ${row["รูปแนบ_1"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm">
+                                <div class="avoid-page-break flex-1 bg-white p-2 border rounded shadow-sm">
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 1 (คลิกเพื่อขยาย)</p>
                                     <img src="${getDirectDriveLink(row["รูปแนบ_1"])}" 
                                          onclick="viewImageFull(this.src)" 
@@ -534,7 +516,7 @@
                             ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 1</div>'}
                             
                             ${row["รูปแนบ_2"] ? `
-                                <div class="flex-1 bg-white p-2 border rounded shadow-sm">
+                                <div class="avoid-page-break flex-1 bg-white p-2 border rounded shadow-sm">
                                     <p class="text-xs font-semibold text-gray-500 mb-2 text-center">รูปแนบ 2 (คลิกเพื่อขยาย)</p>
                                     <img src="${getDirectDriveLink(row["รูปแนบ_2"])}" 
                                          onclick="viewImageFull(this.src)" 
@@ -543,7 +525,7 @@
                             ` : '<div class="flex-1 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center h-48 bg-white text-gray-400 text-sm"><svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ไม่มีรูปที่ 2</div>'}
                         </div>
                     </div>
-                </section>
+                </div>
                 <!-- End of Report -->
             `;
 
@@ -578,7 +560,7 @@
         });
         
         // ==========================================
-        // ฟังก์ชันโหลด PDF (ปรับแต่งใหม่ ให้พอดี A4)
+        // ฟังก์ชันโหลด PDF
         // ==========================================
         function downloadPDF() {
             const element = document.getElementById('modal-content');
@@ -596,7 +578,6 @@
                 },
                 pagebreak: { 
                     mode: ['css', 'legacy'],
-                    before: '.page-break',
                     avoid: '.avoid-page-break'
                 },
                 html2canvas: { 
